@@ -11,22 +11,22 @@ import com.flangenet.stockcheck.Model.StockItem
 import com.flangenet.stockcheck.R
 import kotlinx.android.synthetic.main.stock_line.view.*
 
-class StockItemsAdapter (val context: Context, val items:ArrayList<StockCheck>, val itemClick:(StockCheck) -> Unit):RecyclerView.Adapter<StockItemsAdapter.ViewHolder>(){
+class StockItemsAdapter (val context: Context, val items:ArrayList<StockCheck>, val itemClick:(Int) -> Unit):RecyclerView.Adapter<StockItemsAdapter.ViewHolder>(){
 
-    inner class ViewHolder (itemView: View, val itemClick: (StockCheck) -> Unit) : RecyclerView.ViewHolder(itemView){
+    inner class ViewHolder (itemView: View, val itemClick: (Int) -> Unit) : RecyclerView.ViewHolder(itemView){
         private val description: TextView = itemView.findViewById<TextView>(R.id.Description)
         private val iD: TextView = itemView.findViewById<TextView>(R.id.txtId)
         private val stock: TextView = itemView.findViewById<TextView>(R.id.txtStock)
 
-        fun bindItems(item:StockCheck){
+        fun bindItems(item:StockCheck, position: Int){
             description.text = item.description
-            iD.text = item.displayOrder.toString()
+            iD.text = position.toString()
 
             stock.text = String.format("%.2f", item.stock)
 
             itemView.setOnClickListener{
                 //it.setBackgroundColor(context.getColor(android.R.color.holo_green_light))
-                itemClick(item)
+                itemClick(position)
             }
         }
     }
@@ -50,7 +50,7 @@ class StockItemsAdapter (val context: Context, val items:ArrayList<StockCheck>, 
             holder.itemView.setBackgroundColor(context.getColor(android.R.color.white))
             //holder.itemView.Description.fontFeatureSettings
         }
-        holder.bindItems(items[position])
+        holder.bindItems(items[position], position)
        // println("${holder.adapterPosition}")
 
 

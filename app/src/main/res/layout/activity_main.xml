@@ -24,13 +24,13 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="184dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:text="New Day"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.529"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/recyclerCheckItems" />
 
     <Button
         android:id="@+id/btnEnterCheck"
@@ -44,5 +44,55 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnNewDay" />
+
+    <TextView
+        android:id="@+id/txtToday"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textAlignment="center"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@+id/btnNextWeek"
+        app:layout_constraintStart_toEndOf="@+id/btnPrevWeek"
+        app:layout_constraintTop_toBottomOf="@+id/imageView"
+        tools:text="Monday January 7th 1971" />
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="0dp"
+        android:layout_height="120dp"
+        android:scaleType="fitXY"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@mipmap/winchester_logo" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerCheckItems"
+        android:layout_width="409dp"
+        android:layout_height="359dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtToday" />
+
+    <Button
+        android:id="@+id/btnPrevWeek"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:text="@android:string/VideoView_error_button"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageView" />
+
+    <Button
+        android:id="@+id/btnNextWeek"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:text="@android:string/VideoView_error_button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageView" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

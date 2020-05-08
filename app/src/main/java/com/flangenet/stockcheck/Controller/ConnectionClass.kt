@@ -2,6 +2,7 @@ package com.flangenet.stockcheck.Controller
 
 import android.os.StrictMode
 import android.util.Log
+import com.flangenet.stockcheck.Model.CheckItems
 import com.flangenet.stockcheck.Model.StockCheck
 import com.flangenet.stockcheck.Model.StockItem
 import java.lang.Exception
@@ -9,6 +10,8 @@ import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
 import java.sql.Statement
+import java.util.*
+import kotlin.collections.ArrayList
 
 class ConnectionClass {
     private val ip = "192.168.1.151"
@@ -69,6 +72,28 @@ class ConnectionClass {
             displayOrder += 1
         }
         return listStockCheck
+
+    }
+
+    fun getChecks(conn: Connection?, checkDate:Date): ArrayList<CheckItems>{
+        val listChecks = ArrayList<CheckItems>()
+
+        val statement: Statement = conn!!.createStatement()
+        val checkSQL = "SELECT * FROM type ORDER BY id;"
+
+        var rs = statement.executeQuery(checkSQL)
+
+        while(rs.next()) {
+            val tList = CheckItems(0,"!",0)
+            tList.dateID = rs.getInt(1)
+            tList.description = rs.getString(2)
+            tList.counter = 1
+            listChecks.add(tList)
+            println("${rs.getInt(1)} : ${rs.getString(2)}")
+
+        }
+
+        return listChecks
 
     }
 

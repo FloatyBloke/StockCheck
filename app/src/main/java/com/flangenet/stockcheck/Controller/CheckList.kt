@@ -40,22 +40,6 @@ class CheckList : AppCompatActivity() {
         itemsAdapter = StockItemsAdapter(this, lstItems as ArrayList<StockCheck>) { position ->
             // item is clicked
             refreshSelected(position)
-
-
-/*            val x: Int = recycleStockItems.childCount
-            var i = 0
-            while (i < x) {
-                val holder: RecyclerView.ViewHolder = recycleStockItems.getChildViewHolder(recycleStockItems.getChildAt(i))
-                if (item.id == i) {
-                    holder.itemView.setBackgroundColor(this.getColor(android.R.color.holo_green_light))
-                } else {
-                    holder.itemView.setBackgroundColor(this.getColor(android.R.color.white))
-                }
-                //println("$i - O:$oldSelectedPos - id:${item.id}")
-                ++i
-            }
-            oldSelectedPos = item.id*/
-
         }
 
         recycleStockItems.adapter = itemsAdapter

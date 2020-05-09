@@ -7,15 +7,18 @@ import com.flangenet.stockcheck.Adapter.StockItemsAdapter
 import com.flangenet.stockcheck.Model.StockCheck
 import com.flangenet.stockcheck.Model.StockItem
 import com.flangenet.stockcheck.R
+import com.flangenet.stockcheck.Utilities.EXTRA_CHECKLIST_DATE
 import com.flangenet.stockcheck.Utilities.EXTRA_CHECKLIST_TYPE
 import kotlinx.android.synthetic.main.activity_check_list.*
 import java.sql.Connection
+import java.util.*
+import kotlin.collections.ArrayList
 
-private var checkListType : Int = 1
 
 class CheckList : AppCompatActivity() {
 
-
+    private var checkListType : Int = 1
+    private var selectedDateText : String = "1971-01-07"
     private var conn:Connection? = null
 
     var lstItems = ArrayList<StockCheck>()
@@ -27,6 +30,8 @@ class CheckList : AppCompatActivity() {
         setContentView(R.layout.activity_check_list)
 
         checkListType = intent.getIntExtra(EXTRA_CHECKLIST_TYPE,1)
+        selectedDateText = intent.getStringExtra(EXTRA_CHECKLIST_DATE)
+
         btnNext.setOnClickListener{nextButton()}
         btnPrevious.setOnClickListener{prevButton()}
 
@@ -34,7 +39,7 @@ class CheckList : AppCompatActivity() {
         val db = ConnectionClass()
         conn = db.dbConnect()
 
-        lstItems = db.getStockCheck(conn, checkListType)
+        lstItems = db.getStockCheck(conn, checkListType, selectedDateText)
         conn!!.close()
 
         itemsAdapter = StockItemsAdapter(this, lstItems as ArrayList<StockCheck>) { position ->
@@ -52,13 +57,14 @@ class CheckList : AppCompatActivity() {
     fun refreshSelected(newItem: Int){
         //println("${selectedPos} - $newItem")
         var newItem2 = newItem
-        println("Selected : $selectedPos - Count:${lstItems.count()}")
+
         if (newItem >= lstItems.count()){
             newItem2 = 0
         }
         if (newItem < 0){
             newItem2 = lstItems.count()-1
         }
+        //println("After new calc Selected : $selectedPos - Count:${lstItems.count()} - NewItem:$newItem2")
         txtItemDescription.text = lstItems[newItem2].description
         lstItems[selectedPos].selected = false
         lstItems[newItem2].selected = true
@@ -69,7 +75,7 @@ class CheckList : AppCompatActivity() {
             edtEntry.setText(lstItems[selectedPos].stock.toString())
         }
         edtEntry.selectAll()
-        recycleStockItems.smoothScrollToPosition(newItem)
+        recycleStockItems.smoothScrollToPosition(newItem2)
         recycleStockItems.adapter?.notifyDataSetChanged()
 
     }

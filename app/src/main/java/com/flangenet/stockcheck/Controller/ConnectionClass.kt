@@ -4,7 +4,7 @@ import android.os.StrictMode
 import android.util.Log
 import com.flangenet.stockcheck.Model.CheckItems
 import com.flangenet.stockcheck.Model.StockCheck
-import com.flangenet.stockcheck.Model.StockItem
+import com.flangenet.stockcheck.Utilities.sqlDateFormat
 import java.lang.Exception
 import java.sql.Connection
 import java.sql.DriverManager
@@ -46,50 +46,74 @@ class ConnectionClass {
 
     }
 
-    fun getStockCheck(conn: Connection?, checkType:Int): ArrayList<StockCheck>{
+    fun getStockCheck(conn: Connection?, checkType:Int, selectedDateText: String): ArrayList<StockCheck>{
         val listStockCheck = ArrayList<StockCheck>()
 
         val statement: Statement = conn!!.createStatement()
-        val checkSQL = "SELECT checkitems.displayorder, product.id, product.name " +
+        var checkSQL = "SELECT checkitems.displayorder, product.id, product.name " +
                 "FROM checkitems INNER JOIN product ON checkitems.itemid=product.id " +
                 "WHERE checkitems.type=$checkType ORDER BY checkitems.displayorder;"
 
+        checkSQL = "SELECT checkitems.type, checkitems.displayorder, checkitems.itemid, selchecks.stock " +
+                "FROM checkitems " +
+                "LEFT JOIN" +
+                "(SELECT  date, typeid, itemid, stock FROM checks WHERE typeid=$checkType AND date='$selectedDateText') selchecks " +
+                "ON checkitems.id = selchecks.itemid " +
+                "WHERE checkitems.type=$checkType"
+
+        checkSQL = "SELECT checkitems.type, checkitems.displayorder, checkitems.itemid, selchecks.name,selchecks.stock " +
+                "FROM checkitems " +
+                "LEFT JOIN" +
+                "(SELECT date, typeid, itemid,product.name AS name, stock FROM checks INNER JOIN product ON checks.itemid=product.id WHERE typeid=$checkType AND date='$selectedDateText') selchecks " +
+                "ON checkitems.itemid = selchecks.itemid " +
+                "WHERE checkitems.type=$checkType"
+
+
         //var rs = statement.executeQuery("select * from product")
         var rs = statement.executeQuery(checkSQL)
+        println(checkSQL)
         var displayOrder : Int = 0
         while(rs.next()) {
             val tList = StockCheck(0,0,"t",0F,false)
 
+            tList.displayOrder = rs.getInt(2)
+            tList.productId = rs.getInt(3)
+            if (rs.getString(4) == null){
+                tList.description = "?????"
+            } else {
+                tList.description = rs.getString(4)
+            }
 
-            tList.productId = rs.getInt(2)
-            tList.displayOrder = rs.getInt(1)
-            tList.description = rs.getString(3)
-            //tList.stock = rs.getFloat(3)
-            tList.stock=0f
+            tList.stock = rs.getFloat(5)
+            //tList.stock=0f
             tList.selected = false
             listStockCheck.add(tList)
-            println("${displayOrder} : ${rs.getInt(1)} : ${rs.getString(2)}")
+            //println("${displayOrder} : ${rs.getInt(1)} : ${rs.getString(2)}")
             displayOrder += 1
         }
         return listStockCheck
 
     }
 
-    fun getChecks(conn: Connection?, checkDate:Date): ArrayList<CheckItems>{
+    fun getChecks(conn: Connection?, selectedDate:Date): ArrayList<CheckItems>{
         val listChecks = ArrayList<CheckItems>()
 
         val statement: Statement = conn!!.createStatement()
-        val checkSQL = "SELECT * FROM type ORDER BY id;"
+        var checkSQL = " SELECT type.id, type.name, checks.stock FROM type LEFT JOIN checks ON type.id = checks.typeid ORDER BY id;"
+        checkSQL = "SELECT type.id, type.name, counts.date, counts.reccount " +
+                "FROM type LEFT JOIN(SELECT date,typeid, COUNT(*) AS reccount " +
+                "FROM checks WHERE date='${sqlDateFormat.format(selectedDate)}' GROUP BY typeid,date) counts " +
+                "ON type.id = counts.typeid;"
 
         var rs = statement.executeQuery(checkSQL)
 
         while(rs.next()) {
             val tList = CheckItems(0,"!",0)
-            tList.dateID = rs.getInt(1)
+            tList.checkID = rs.getInt(1)
             tList.description = rs.getString(2)
-            tList.counter = 1
+            tList.counter = rs.getInt(4)
             listChecks.add(tList)
-            println("${rs.getInt(1)} : ${rs.getString(2)}")
+            //println("${rs.getInt(1)} : ${rs.getString(2)}")
 
         }
 

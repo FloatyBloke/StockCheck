@@ -17,14 +17,15 @@ class CheckItemsAdapter (val context: Context, val items:ArrayList<CheckItems>, 
         private val iD: TextView = itemView.findViewById<TextView>(R.id.txtId)
         private val count: TextView = itemView.findViewById<TextView>(R.id.txtCount)
 
-        fun bindItems(item: CheckItems, position: Int){
+        fun bindItems(item: CheckItems, checkID: Int){
             description.text = item.description
-            iD.text = position.toString()
+            //iD.text = position.toString()
+            iD.text = item.checkID.toString()
             count.text = item.counter.toString()
 
             itemView.setOnClickListener{
                 //it.setBackgroundColor(context.getColor(android.R.color.holo_green_light))
-                itemClick(position)
+                itemClick(checkID)
             }
         }
     }
@@ -42,7 +43,7 @@ class CheckItemsAdapter (val context: Context, val items:ArrayList<CheckItems>, 
 
     override fun onBindViewHolder(holder: CheckItemsAdapter.ViewHolder, position: Int) {
 
-        holder.bindItems(items[position], position)
+        holder.bindItems(items[position], items[position].checkID)
         // println("${holder.adapterPosition}")
 
 

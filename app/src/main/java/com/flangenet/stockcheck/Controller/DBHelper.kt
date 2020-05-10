@@ -1,11 +1,12 @@
 package com.flangenet.stockcheck.Controller
 
+import android.content.ContentValues
 import android.os.StrictMode
 import android.util.Log
 import com.flangenet.stockcheck.Model.CheckItems
 import com.flangenet.stockcheck.Model.StockCheck
+import com.flangenet.stockcheck.Model.checksDB
 import com.flangenet.stockcheck.Utilities.sqlDateFormat
-import java.lang.Exception
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
@@ -13,7 +14,7 @@ import java.sql.Statement
 import java.util.*
 import kotlin.collections.ArrayList
 
-class ConnectionClass {
+class DBHelper {
     private val ip = "192.168.1.151"
     private val db = "stockchecks"
     private val username = "god3"
@@ -46,6 +47,45 @@ class ConnectionClass {
 
     }
 
+
+    fun createBlankStockCheck(conn: Connection?, checkType:Int, selectedDate: Date){
+        val listStockCheck = ArrayList<checksDB>()
+        val statement: Statement = conn!!.createStatement()
+
+        // Import new items for specified set into array
+
+        var checkSQL = "SELECT * FROM checkitems WHERE type=$checkType ORDER BY displayorder;"
+        var rs = statement.executeQuery(checkSQL)
+        var resultSQL: Boolean
+        println(checkSQL)
+        while(rs.next()) {
+            val tList = checksDB(0,Date(),checkType,0,0F)
+            //tList.id = null
+            tList.date = selectedDate
+            tList.typeID = rs.getInt(2)
+            tList.itemID = rs.getInt(4)
+            tList.stock=0f
+            listStockCheck.add(tList)
+            //println("${tList.date} : ${tList.typeID} : ${tList.itemID} : ${tList.stock}")
+        }
+
+        // Take array and UPDATE checks with new zero stock check
+
+        var insertSQL = StringBuilder()
+        insertSQL.append("INSERT INTO checks (date, typeid, itemid, stock) VALUES ")
+        listStockCheck.forEach {
+             insertSQL.append("('${sqlDateFormat.format(it.date)}', '${it.typeID}', '${it.itemID}', '${it.stock}'),")
+        }
+        var t = insertSQL.toString()
+        var t2 = t.substring(0,t.length-1) +";"
+        statement.execute(t2)
+
+    }
+
+    fun dateToSQLDate(javaDate: Date) : java.sql.Date{
+        return java.sql.Date(javaDate.time)
+    }
+
     fun getStockCheck(conn: Connection?, checkType:Int, selectedDateText: String): ArrayList<StockCheck>{
         val listStockCheck = ArrayList<StockCheck>()
 
@@ -61,20 +101,22 @@ class ConnectionClass {
                 "ON checkitems.id = selchecks.itemid " +
                 "WHERE checkitems.type=$checkType"
 
-        checkSQL = "SELECT checkitems.type, checkitems.displayorder, checkitems.itemid, selchecks.name,selchecks.stock " +
+        checkSQL = "SELECT checkitems.type, checkitems.displayorder, checkitems.itemid, selchecks.name,selchecks.stock, checksid " +
                 "FROM checkitems " +
                 "LEFT JOIN" +
-                "(SELECT date, typeid, itemid,product.name AS name, stock FROM checks INNER JOIN product ON checks.itemid=product.id WHERE typeid=$checkType AND date='$selectedDateText') selchecks " +
+                "(SELECT date, typeid, itemid,product.name AS name, stock, checks.id AS checksid FROM checks INNER JOIN product ON checks.itemid=product.id WHERE typeid=$checkType AND date='$selectedDateText') selchecks " +
                 "ON checkitems.itemid = selchecks.itemid " +
                 "WHERE checkitems.type=$checkType"
 
 
         //var rs = statement.executeQuery("select * from product")
-        var rs = statement.executeQuery(checkSQL)
         println(checkSQL)
+
+        var rs = statement.executeQuery(checkSQL)
+
         var displayOrder : Int = 0
         while(rs.next()) {
-            val tList = StockCheck(0,0,"t",0F,false)
+            val tList = StockCheck(0,0,0,"t",0F,false)
 
             tList.displayOrder = rs.getInt(2)
             tList.productId = rs.getInt(3)
@@ -87,6 +129,7 @@ class ConnectionClass {
             tList.stock = rs.getFloat(5)
             //tList.stock=0f
             tList.selected = false
+            tList.checkID = rs.getInt(6)
             listStockCheck.add(tList)
             //println("${displayOrder} : ${rs.getInt(1)} : ${rs.getString(2)}")
             displayOrder += 1
@@ -121,4 +164,11 @@ class ConnectionClass {
 
     }
 
+    fun updateCheck(conn: Connection,checkID:Int, checkStock: Float){
+        val statement: Statement = conn!!.createStatement()
+        var checkSQL = "UPDATE checks SET stock='$checkStock' WHERE id=$checkID;"
+        statement.execute(checkSQL)
+    }
+
 }
+

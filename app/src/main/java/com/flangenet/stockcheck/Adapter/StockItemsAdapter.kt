@@ -21,9 +21,7 @@ class StockItemsAdapter (val context: Context, val items:ArrayList<StockCheck>, 
         fun bindItems(item:StockCheck, position: Int){
             description.text = item.description
             iD.text = position.toString()
-
             stock.text = String.format("%.2f", item.stock)
-
             itemView.setOnClickListener{
                 //it.setBackgroundColor(context.getColor(android.R.color.holo_green_light))
                 itemClick(position)

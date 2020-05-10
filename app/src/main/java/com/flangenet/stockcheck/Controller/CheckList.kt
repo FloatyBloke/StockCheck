@@ -2,10 +2,10 @@ package com.flangenet.stockcheck.Controller
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.flangenet.stockcheck.Adapter.StockItemsAdapter
 import com.flangenet.stockcheck.Model.StockCheck
-import com.flangenet.stockcheck.Model.StockItem
 import com.flangenet.stockcheck.R
 import com.flangenet.stockcheck.Utilities.EXTRA_CHECKLIST_DATE
 import com.flangenet.stockcheck.Utilities.EXTRA_CHECKLIST_TYPE
@@ -24,6 +24,9 @@ class CheckList : AppCompatActivity() {
     var lstItems = ArrayList<StockCheck>()
     lateinit var itemsAdapter: StockItemsAdapter
     var selectedPos: Int = 0
+    //Text To Speech
+    lateinit var mTTS: TextToSpeech
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,12 +35,23 @@ class CheckList : AppCompatActivity() {
         checkListType = intent.getIntExtra(EXTRA_CHECKLIST_TYPE,1)
         selectedDateText = intent.getStringExtra(EXTRA_CHECKLIST_DATE)
 
+        mTTS = TextToSpeech(applicationContext, TextToSpeech.OnInitListener { status ->
+            if (status != TextToSpeech.ERROR){
+                //if there is no error then set language
+                mTTS.language = Locale.UK
+            }
+        })
+
+
+
         btnNext.setOnClickListener{nextButton()}
         btnPrevious.setOnClickListener{prevButton()}
+        btnUpdate.setOnClickListener{updateCheck()}
 
 
-        val db = ConnectionClass()
+        val db = DBHelper()
         conn = db.dbConnect()
+
 
         lstItems = db.getStockCheck(conn, checkListType, selectedDateText)
         conn!!.close()
@@ -77,6 +91,9 @@ class CheckList : AppCompatActivity() {
         edtEntry.selectAll()
         recycleStockItems.smoothScrollToPosition(newItem2)
         recycleStockItems.adapter?.notifyDataSetChanged()
+        mTTS.speak(lstItems[newItem2].description,TextToSpeech.QUEUE_FLUSH,null)
+        //mTTS.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null)
+
 
     }
 
@@ -95,5 +112,16 @@ class CheckList : AppCompatActivity() {
             lstItems[selectedPos].stock = newText.toFloat()
         }
         refreshSelected(selectedPos-1)
+    }
+
+    fun updateCheck(){
+        val db = DBHelper()
+        conn = db.dbConnect()
+
+        lstItems.forEach{
+            db.updateCheck(conn!!,it.checkID,it.stock)
+            println("${it.checkID} , ${it.stock}")
+        }
+
     }
 }

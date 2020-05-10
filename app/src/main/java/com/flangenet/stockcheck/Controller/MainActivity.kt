@@ -2,6 +2,7 @@ package com.flangenet.stockcheck.Controller
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.flangenet.stockcheck.Adapter.CheckItemsAdapter
@@ -13,8 +14,8 @@ import com.flangenet.stockcheck.Utilities.prettyDateFormat
 import com.flangenet.stockcheck.Utilities.sqlDateFormat
 import kotlinx.android.synthetic.main.activity_main.*
 import java.sql.Connection
-import java.text.SimpleDateFormat
 import java.util.*
+import kotlinx.coroutines.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -22,21 +23,27 @@ class MainActivity : AppCompatActivity() {
     private  var conn: Connection? = null
     var lstItems = ArrayList<CheckItems>()
     lateinit var itemsAdapter: CheckItemsAdapter
-    val db = ConnectionClass()
+    val db = DBHelper()
     var selectedDate = Date()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        //btnStockView.setOnClickListener { testButton() }
+        btnTest.setOnClickListener { testButton() }
         //btnNewDay.setOnClickListener { testButton2() }
         btnNextWeek.setOnClickListener { changeDate(1) }
         btnPrevWeek.setOnClickListener { changeDate(-1) }
         //getConnection()
+        enableSpinner(false,"Info")
 
+
+
+    }
+
+    override fun onResume() {
+        super.onResume()
         refreshData()
-
     }
     fun refreshData(){
         txtToday.text = prettyDateFormat.format(selectedDate)
@@ -44,10 +51,28 @@ class MainActivity : AppCompatActivity() {
         lstItems = db.getChecks(conn, selectedDate)
         conn!!.close()
 
-        itemsAdapter = CheckItemsAdapter(this, lstItems as ArrayList<CheckItems>) { position ->
+        itemsAdapter = CheckItemsAdapter(this, lstItems as ArrayList<CheckItems>) { position,recordCount ->
             // item is clicked
-            //refreshSelected(position)
-            //println("$position - ${sqlDateFormat.format(selectedDate)}")
+            // refreshSelected(position)
+            // println("$position - ${sqlDateFormat.format(selectedDate)}")
+
+            // Create a new zeroed stock check if none exists
+
+            if (recordCount == 0){
+                enableSpinner(true,"Please wait......")
+                GlobalScope.launch(Dispatchers.Main) {
+                    conn = db.dbConnect()
+                    db.createBlankStockCheck(conn, position, selectedDate)
+                    conn!!.close()
+                }
+                enableSpinner(false,"Please wait......")
+                    
+            }
+
+
+
+
+
             val checkListIntent = Intent(this,CheckList::class.java)
             checkListIntent.putExtra(EXTRA_CHECKLIST_TYPE,(position))
             checkListIntent.putExtra(EXTRA_CHECKLIST_DATE,sqlDateFormat.format(selectedDate))
@@ -62,13 +87,9 @@ class MainActivity : AppCompatActivity() {
 
 
     fun testButton() {
-        val checkListIntent = Intent(this,CheckList::class.java)
-        checkListIntent.putExtra(EXTRA_CHECKLIST_TYPE,1)
-        checkListIntent.putExtra(EXTRA_CHECKLIST_DATE,sqlDateFormat.format(selectedDate))
-        startActivity(checkListIntent)
-        //executeMySQLQuery()
-
-        //t?.close()
+        conn = db.dbConnect()
+        db.createBlankStockCheck(conn,1,selectedDate)
+        conn!!.close()
 
     }
     fun testButton2() {
@@ -82,7 +103,6 @@ class MainActivity : AppCompatActivity() {
 
     }
     fun changeDate(days:Int){
-
         val c = Calendar.getInstance()
         c.time = selectedDate
         c.add(Calendar.DATE, days)
@@ -90,7 +110,20 @@ class MainActivity : AppCompatActivity() {
         refreshData()
     }
 
+    private fun enableSpinner(enable: Boolean, info: String) {
+        txtInfo.text = info
+        if (enable) {
+            progressBar.visibility = View.VISIBLE
+            txtInfo.visibility = View.VISIBLE
+        } else {
+            progressBar.visibility = View.INVISIBLE
+            txtInfo.visibility = View.INVISIBLE
+        }
 
-
+        //btnImport.isEnabled = !enable
+        //btnExport.isEnabled = !enable
+        //logText.isEnabled = !enable
+        //hideKeyboard()
+    }
 
 }

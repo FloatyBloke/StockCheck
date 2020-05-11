@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
                     conn = db.dbConnect()
                     db.createBlankStockCheck(conn, position, selectedDate)
                     conn!!.close()
-                }
+                }.invokeOnCompletion { println("I'm Back") }
                 enableSpinner(false,"Please wait......")
                     
             }
@@ -87,9 +87,7 @@ class MainActivity : AppCompatActivity() {
 
 
     fun testButton() {
-        conn = db.dbConnect()
-        db.createBlankStockCheck(conn,1,selectedDate)
-        conn!!.close()
+
 
     }
     fun testButton2() {

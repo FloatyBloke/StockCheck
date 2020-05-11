@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <array name="preloaded_fonts" translatable="false">
+        <item>@font/atomic_age</item>
+        <item>@font/faster_one</item>
+        <item>@font/fresca</item>
+        <item>@font/metrophobic</item>
+        <item>@font/orbitron</item>
+        <item>@font/oxygen_light</item>
+        <item>@font/share_tech</item>
+        <item>@font/syncopate</item>
         <item>@font/ubuntu_light</item>
     </array>
 </resources>

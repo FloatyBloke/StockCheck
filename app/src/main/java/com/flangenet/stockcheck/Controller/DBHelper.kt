@@ -7,11 +7,10 @@ import com.flangenet.stockcheck.Model.CheckItems
 import com.flangenet.stockcheck.Model.StockCheck
 import com.flangenet.stockcheck.Model.checksDB
 import com.flangenet.stockcheck.Utilities.sqlDateFormat
-import java.sql.Connection
-import java.sql.DriverManager
-import java.sql.SQLException
-import java.sql.Statement
+import kotlinx.coroutines.GlobalScope
+import java.sql.*
 import java.util.*
+import java.util.Date
 import kotlin.collections.ArrayList
 
 class DBHelper {
@@ -110,7 +109,10 @@ class DBHelper {
 
 
         //var rs = statement.executeQuery("select * from product")
-        println(checkSQL)
+        //println(checkSQL)
+
+
+
 
         var rs = statement.executeQuery(checkSQL)
 
@@ -165,9 +167,16 @@ class DBHelper {
     }
 
     fun updateCheck(conn: Connection,checkID:Int, checkStock: Float){
-        val statement: Statement = conn!!.createStatement()
+/*        val statement: Statement = conn!!.createStatement()
         var checkSQL = "UPDATE checks SET stock='$checkStock' WHERE id=$checkID;"
         statement.execute(checkSQL)
+        */
+
+        val ps: PreparedStatement = conn.prepareStatement("UPDATE checks SET stock=$checkStock WHERE id=$checkID")
+
+        var i = ps.executeUpdate()
+
+
     }
 
 }

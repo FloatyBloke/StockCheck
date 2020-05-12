@@ -1,7 +1,11 @@
 package com.flangenet.stockcheck.Controller
 
+import android.app.Activity
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.KeyEvent
@@ -62,9 +66,6 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
         lstItems = db.getStockCheck(conn, checkListType, selectedDateText)
         conn!!.close()
 
-
-
-
         itemsAdapter = StockItemsAdapter(this, lstItems as ArrayList<StockCheck>) { position ->
             // item is clicked
             refreshSelected(position)
@@ -75,7 +76,7 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
         recycleStockItems.layoutManager = layoutManager
 
 
-
+        // Capture Enter key and perform nextButton
         edtEntry.setOnKeyListener { v, keyCode, event ->
             if ((keyCode == KeyEvent.KEYCODE_ENTER) && (event.action == KeyEvent.ACTION_DOWN)) {
                     nextButton()
@@ -86,10 +87,7 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
         mTTS!!.speak(intent.getStringExtra(EXTRA_CHECKLIST_DATE),TextToSpeech.QUEUE_FLUSH,null,"")
         enableSpinner(false)
         refreshSelected(0)
-
     }
-
-
 
     private fun refreshSelected(newItem: Int){
         //println("${selectedPos} - $newItem")
@@ -122,6 +120,7 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
 
+
     }
 
     private fun nextButton(){
@@ -131,6 +130,7 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
             lstItems[selectedPos].stock = newText.toFloat()
         }
         refreshSelected(selectedPos+1)
+        askSpeechInput()
     }
     private fun prevButton(){
         val newText = edtEntry.text.toString()
@@ -202,8 +202,22 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
         edtEntry.isEnabled = !enable
         //hideKeyboard()
     }
-
-
+    private fun askSpeechInput() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE,Locale.getDefault())
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Hi speak something");
+        startActivityForResult(intent, 1000);
+    }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 1000 && resultCode == Activity.RESULT_OK) {
+            val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            Log.d("TAG-R", results?.toString())
+            edtEntry.setText(results!![0].toString())
+            nextButton()
+        }
+    }
 
 
 }

@@ -87,6 +87,8 @@ class MainActivity : AppCompatActivity() {
 
 
     fun testButton() {
+        val testIntent = Intent(this,Welcome::class.java)
+        startActivity(testIntent)
 
 
     }

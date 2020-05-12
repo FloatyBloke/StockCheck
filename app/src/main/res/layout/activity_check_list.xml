@@ -12,6 +12,7 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="8dp"
         android:background="@color/wak_grey"
+        android:fontFamily="@font/calibri"
         android:text="Walk In Freezer"
         android:textSize="30sp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -28,7 +29,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
         android:layout_marginTop="32dp"
-        app:layout_constraintStart_toStartOf="@+id/imageView"
+        app:layout_constraintStart_toStartOf="@+id/cv2"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView

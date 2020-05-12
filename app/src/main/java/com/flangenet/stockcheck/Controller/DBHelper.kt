@@ -7,7 +7,9 @@ import com.flangenet.stockcheck.Model.CheckItems
 import com.flangenet.stockcheck.Model.StockCheck
 import com.flangenet.stockcheck.Model.checksDB
 import com.flangenet.stockcheck.Utilities.sqlDateFormat
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.sql.*
 import java.util.*
 import java.util.Date
@@ -173,11 +175,7 @@ class DBHelper {
         */
 
         val ps: PreparedStatement = conn.prepareStatement("UPDATE checks SET stock=$checkStock WHERE id=$checkID")
-
         var i = ps.executeUpdate()
-
-
     }
-
 }
 

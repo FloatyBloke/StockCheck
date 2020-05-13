@@ -51,6 +51,8 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
         super.onCreate(savedInstanceState)
 
         mTTS = TextToSpeech(this,this)
+        mTTS!!.stop()
+
         setContentView(R.layout.activity_check_list)
 
         checkListType = intent.getIntExtra(EXTRA_CHECKLIST_TYPE,1)
@@ -83,8 +85,8 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
             return@setOnKeyListener false
         }
-
-        mTTS!!.speak(intent.getStringExtra(EXTRA_CHECKLIST_DATE),TextToSpeech.QUEUE_FLUSH,null,"")
+        mTTS!!.stop()
+        mTTS!!.speak(intent.getStringExtra(EXTRA_CHECKLIST_TYPE),TextToSpeech.QUEUE_FLUSH,null,"")
         enableSpinner(false)
         refreshSelected(0)
     }
@@ -115,14 +117,18 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
         recycleStockItems.smoothScrollToPosition(newItem2)
         recycleStockItems.adapter?.notifyDataSetChanged()
         println("About to say ${lstItems[newItem2].description}")
-        mTTS!!.speak(lstItems[newItem2].description,TextToSpeech.QUEUE_FLUSH,null)
-        //mTTS.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null)
+
+        say(lstItems[newItem2].description)
+
 
 
 
 
     }
+    private fun say(stuff: String){
+        mTTS!!.speak(stuff,TextToSpeech.QUEUE_FLUSH,null)
 
+    }
     private fun nextButton(){
         val newText = edtEntry.text.toString()
         val newStock: Float = 0f
@@ -130,7 +136,7 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
             lstItems[selectedPos].stock = newText.toFloat()
         }
         refreshSelected(selectedPos+1)
-        askSpeechInput()
+        //askSpeechInput()
     }
     private fun prevButton(){
         val newText = edtEntry.text.toString()
@@ -214,8 +220,17 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (requestCode == 1000 && resultCode == Activity.RESULT_OK) {
             val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
             Log.d("TAG-R", results?.toString())
-            edtEntry.setText(results!![0].toString())
-            nextButton()
+
+            var t : Float = results!![0].toFloatOrNull()!!
+            if (t == null){
+                say("I didn't understand")
+                refreshSelected(selectedPos)
+            } else {
+                edtEntry.setText(results!![0].toString())
+
+                nextButton()
+            }
+
         }
     }
 

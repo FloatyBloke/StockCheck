@@ -69,10 +69,6 @@ class MainActivity : AppCompatActivity() {
                     
             }
 
-
-
-
-
             val checkListIntent = Intent(this,CheckList::class.java)
             checkListIntent.putExtra(EXTRA_CHECKLIST_TYPE,(position))
             checkListIntent.putExtra(EXTRA_CHECKLIST_DATE,sqlDateFormat.format(selectedDate))

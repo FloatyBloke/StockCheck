@@ -16,10 +16,10 @@ import java.util.Date
 import kotlin.collections.ArrayList
 
 class DBHelper {
-    private val ip = "192.168.1.151"
-    private val db = "stockchecks"
-    private val username = "god3"
-    private val password = "password"
+    private val ip = App.prefs.connectIP
+    private val db = App.prefs.connectDB
+    private val username = App.prefs.connectUser
+    private val password = App.prefs.connectPassword
 
 
     fun dbConnect () : Connection? {
@@ -48,7 +48,39 @@ class DBHelper {
 
     }
 
+    suspend fun dbConnectCheck () : String {
+        val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
+        StrictMode.setThreadPolicy(policy)
 
+        var logInfo: String = "Connection Setup"
+        var conn : Connection? = null
+        var connString : String? = null
+
+        try {
+            Log.e("ASK", "Connection Setup")
+            val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
+            StrictMode.setThreadPolicy(policy)
+            val connURL = "jdbc:mysql://$ip:3306/$db"
+            Class.forName("com.mysql.jdbc.Driver").newInstance()
+
+            conn = DriverManager.getConnection(connURL,username,password)
+            Log.e("ASK", "Connection Made")
+            logInfo = "Connection Made"
+
+        } catch (ex : SQLException) {
+            Log.e("SQL Error : ", ex.message)
+            logInfo = ex.message.toString()
+        } catch (ex1 : ClassNotFoundException) {
+            Log.e("Class Error : ", ex1.message)
+            logInfo = ex1.message.toString()
+        } catch (ex2 : Exception) {
+            Log.e("Error : ", ex2.message)
+            logInfo = ex2.message.toString()
+        }
+        return logInfo
+
+
+    }
     fun createBlankStockCheck(conn: Connection?, checkType:Int, selectedDate: Date){
         val listStockCheck = ArrayList<checksDB>()
         val statement: Statement = conn!!.createStatement()

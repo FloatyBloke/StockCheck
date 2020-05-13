@@ -3,10 +3,11 @@ package com.flangenet.stockcheck.Controller
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.SystemClock
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
-
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -14,13 +15,15 @@ import com.flangenet.stockcheck.R
 import kotlinx.android.synthetic.main.activity_welcome.*
 import java.sql.Connection
 import java.util.*
-import kotlin.concurrent.schedule
+import kotlinx.coroutines.*
+
 
 
 class Welcome : AppCompatActivity() {
 
+
     val db = DBHelper()
-    private  var conn: Connection? = null
+    private  var logInfo: String = "Starting"
     var logText: StringBuilder  = java.lang.StringBuilder()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,28 +31,70 @@ class Welcome : AppCompatActivity() {
         setContentView(R.layout.activity_welcome)
 
         addLog("Attempting to connect to database")
+        addLog("Server : ${App.prefs.connectIP}")
+        addLog("Database : ${App.prefs.connectDB}")
+        addLog("User Name  : ${App.prefs.connectUser}")
+        addLog("Password : ${App.prefs.connectPassword}")
         addLog("Waiting.....")
+
+
         var outputInfo = "??????"
         enableLogSpinner(true)
+        var connectFlag : Boolean = false
 
-            conn = db.dbConnect()
-            checksComplete(conn.toString())
+        // Test connection to server
 
-        askSpeechInput()
+        val t = GlobalScope.launch (Dispatchers.IO) {
+            logInfo = db.dbConnectCheck()
+        }.invokeOnCompletion {
+            println("Out.....................")
+            connectFlag = true
+            this@Welcome.runOnUiThread(java.lang.Runnable {
+                this.checksComplete("Completed connection test")
+            })
 
+        }
 
+        // Routine to make the log look like it's doing something
+
+        val handler = Handler()
+            var i = 0
+            Thread(Runnable {
+                while (i < 180 && !connectFlag) {
+                    i += 1
+                    handler.post(Runnable {
+                        addLog(".")
+                    })
+                    try {
+                        Thread.sleep(1000)
+                    } catch (e: InterruptedException) {
+                        e.printStackTrace()
+                    }
+                }
+                println("Passed through")
+
+            }).start()
+        println("Dropped out the bottom")
 
 
     }
 
-    fun check() : Connection?{
-        return db.dbConnect()
-    }
+
+
 
     fun checksComplete(outputInfo2: String){
-        addLog(outputInfo2)
-        enableLogSpinner(false)
 
+        addLog(outputInfo2)
+        var connectedFlag : Boolean = true
+        println(logInfo)
+
+        if (logInfo == "Connection Made"){
+            addLog("Connection Ok")
+        } else {
+            addLog("Connection Failed...Talk to Lee :)")
+            addLog(logInfo)
+        }
+        enableLogSpinner(false)
     }
 
 
@@ -59,12 +104,14 @@ class Welcome : AppCompatActivity() {
         } else {
             spinnerLog.visibility = View.INVISIBLE
         }
-
+        btnContinue.isEnabled = !enable
     }
 
 
     fun addLog(logLine: String){
-        logText.append(System.lineSeparator())
+        if (logLine != ".") {
+            logText.append(System.lineSeparator())
+        }
         logText.append(logLine)
         txtLog.text = logText
     }
@@ -88,5 +135,7 @@ class Welcome : AppCompatActivity() {
             askSpeechInput()
         }
     }
+
+
 
 }

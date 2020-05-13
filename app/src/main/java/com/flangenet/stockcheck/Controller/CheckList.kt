@@ -86,7 +86,9 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
             return@setOnKeyListener false
         }
         mTTS!!.stop()
-        mTTS!!.speak(intent.getStringExtra(EXTRA_CHECKLIST_TYPE),TextToSpeech.QUEUE_FLUSH,null,"")
+        //this.say(intent.getStringExtra(EXTRA_CHECKLIST_TYPE))
+        var t : String = "${intent.getStringExtra(EXTRA_CHECKLIST_TYPE)} - ${intent.getStringExtra(EXTRA_CHECKLIST_DATE)}"
+        txtInfoCheck.text = t
         enableSpinner(false)
         refreshSelected(0)
     }

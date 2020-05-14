@@ -16,12 +16,12 @@ class StockItemsAdapter (val context: Context, val items:ArrayList<StockCheck>, 
 
     inner class ViewHolder (itemView: View, val itemClick: (Int) -> Unit) : RecyclerView.ViewHolder(itemView){
         private val description: TextView = itemView.findViewById<TextView>(R.id.Description)
-        private val iD: TextView = itemView.findViewById<TextView>(R.id.txtId)
+        //private val iD: TextView = itemView.findViewById<TextView>(R.id.txtId)
         private val stock: TextView = itemView.findViewById<TextView>(R.id.txtStock)
 
         fun bindItems(item:StockCheck, position: Int){
             description.text = item.description
-            iD.text = position.toString()
+            //iD.text = position.toString()
             stock.text = String.format("%.2f", item.stock)
             itemView.setOnClickListener{
                 //it.setBackgroundColor(context.getColor(android.R.color.holo_green_light))

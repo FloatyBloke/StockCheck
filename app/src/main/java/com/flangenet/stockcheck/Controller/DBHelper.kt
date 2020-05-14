@@ -1,17 +1,12 @@
 package com.flangenet.stockcheck.Controller
 
-import android.content.ContentValues
 import android.os.StrictMode
 import android.util.Log
 import com.flangenet.stockcheck.Model.CheckItems
 import com.flangenet.stockcheck.Model.StockCheck
-import com.flangenet.stockcheck.Model.checksDB
+import com.flangenet.stockcheck.Model.ChecksDB
 import com.flangenet.stockcheck.Utilities.sqlDateFormat
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import java.sql.*
-import java.util.*
 import java.util.Date
 import kotlin.collections.ArrayList
 
@@ -82,7 +77,7 @@ class DBHelper {
 
     }
     fun createBlankStockCheck(conn: Connection?, checkType:Int, selectedDate: Date){
-        val listStockCheck = ArrayList<checksDB>()
+        val listStockCheck = ArrayList<ChecksDB>()
         val statement: Statement = conn!!.createStatement()
 
         // Import new items for specified set into array
@@ -92,7 +87,7 @@ class DBHelper {
         var resultSQL: Boolean
         println(checkSQL)
         while(rs.next()) {
-            val tList = checksDB(0,Date(),checkType,0,0F)
+            val tList = ChecksDB(0,Date(),checkType,0,0F)
             //tList.id = null
             tList.date = selectedDate
             tList.typeID = rs.getInt(2)

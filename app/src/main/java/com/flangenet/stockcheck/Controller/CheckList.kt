@@ -16,6 +16,7 @@ import com.flangenet.stockcheck.Adapter.StockItemsAdapter
 import com.flangenet.stockcheck.Model.StockCheck
 import com.flangenet.stockcheck.R
 import com.flangenet.stockcheck.Utilities.EXTRA_CHECKLIST_DATE
+import com.flangenet.stockcheck.Utilities.EXTRA_CHECKLIST_DESC
 import com.flangenet.stockcheck.Utilities.EXTRA_CHECKLIST_TYPE
 import kotlinx.android.synthetic.main.activity_check_list.*
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +31,9 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private var checkListType : Int = 1
     private var selectedDateText : String = "1971-01-07"
+    private var checkListDescription : String = ":)"
     private var conn:Connection? = null
+    private var speechStatus = false
 
     var lstItems = ArrayList<StockCheck>()
     lateinit var itemsAdapter: StockItemsAdapter
@@ -47,26 +50,63 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
         super.onDestroy()
     }
 
+    companion object {
+        private val TAG = CheckList::class.java.simpleName
+        private const val STOCK_CHECK_ARRAY = "STOCK_CHECK_ARRAY"
+        private const val SPEECH_STATUS = "SPEECH_STATUS"
+    }
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelableArrayList(STOCK_CHECK_ARRAY, lstItems)
+        outState.putBoolean(SPEECH_STATUS, speechStatus)
+
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         mTTS = TextToSpeech(this,this)
         mTTS!!.stop()
 
+
         setContentView(R.layout.activity_check_list)
 
+
+
         checkListType = intent.getIntExtra(EXTRA_CHECKLIST_TYPE,1)
+        checkListDescription = intent.getStringExtra(EXTRA_CHECKLIST_DESC)
         selectedDateText = intent.getStringExtra(EXTRA_CHECKLIST_DATE)
 
         btnNext.setOnClickListener{nextButton()}
         btnPrevious.setOnClickListener{prevButton()}
         //btnUpdate.setOnClickListener{updateCheck()}
+        fabSpeechOutput.setOnClickListener{speechStatusToggle()}
 
+        if (savedInstanceState != null){
+            //wcDate = sqlDateToDate(savedInstanceState.getString(WEEK_COMMENCING_DATE)!!)
+            lstItems = savedInstanceState.getParcelableArrayList<StockCheck>(STOCK_CHECK_ARRAY)!!
+            speechStatus = savedInstanceState.getBoolean(SPEECH_STATUS)
+
+                speechStatus=!speechStatus
+                speechStatusToggle()
+
+            var counter = 0
+            lstItems.forEach{
+                if (it.selected){
+                    selectedPos = counter
+                }
+                println(counter)
+                counter += 1
+            }
+            println("Passed Position : $selectedPos")
+        } else {
+            val db = DBHelper()
+            conn = db.dbConnect()
+            lstItems = db.getStockCheck(conn, checkListType, selectedDateText)
+            conn!!.close()
+
+        }
         // Retrieve Stock Check
-        val db = DBHelper()
-        conn = db.dbConnect()
-        lstItems = db.getStockCheck(conn, checkListType, selectedDateText)
-        conn!!.close()
 
         itemsAdapter = StockItemsAdapter(this, lstItems as ArrayList<StockCheck>) { position ->
             // item is clicked
@@ -85,12 +125,24 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
             return@setOnKeyListener false
         }
-        mTTS!!.stop()
+
         //this.say(intent.getStringExtra(EXTRA_CHECKLIST_TYPE))
-        var t : String = "${intent.getStringExtra(EXTRA_CHECKLIST_TYPE)} - ${intent.getStringExtra(EXTRA_CHECKLIST_DATE)}"
-        txtInfoCheck.text = t
+        var headerInfo : String = "${checkListDescription} - ${selectedDateText}"
+        txtCheckHeader.text = "${checkListDescription}${System.lineSeparator()}${selectedDateText}"
+        say(headerInfo)
         enableSpinner(false)
-        refreshSelected(0)
+        refreshSelected(selectedPos)
+    }
+
+
+    private fun speechStatusToggle(){
+        if (speechStatus) {
+            fabSpeechOutput.setImageResource(R.drawable.ic_action_voice_over_off)
+        } else {
+            fabSpeechOutput.setImageResource(R.drawable.ic_action_record_voice_over)
+        }
+
+        speechStatus = ! speechStatus
     }
 
     private fun refreshSelected(newItem: Int){
@@ -122,13 +174,13 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         say(lstItems[newItem2].description)
 
-
-
-
-
     }
+
     private fun say(stuff: String){
-        mTTS!!.speak(stuff,TextToSpeech.QUEUE_FLUSH,null)
+        if (speechStatus){
+            mTTS!!.speak(stuff,TextToSpeech.QUEUE_FLUSH,null)
+        }
+
 
     }
     private fun nextButton(){
@@ -181,6 +233,7 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
         } else {
             Log.e("TTS", "Initilization Failed!")
         }
+        say("Speech initialisation Complete")
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {

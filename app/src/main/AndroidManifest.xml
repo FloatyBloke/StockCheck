@@ -3,7 +3,7 @@
     package="com.flangenet.stockcheck">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:name=".Controller.App"
@@ -13,9 +13,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Controller.Welcome">
-
-        </activity>
+        <activity android:name=".Test"></activity>
+        <activity android:name=".Controller.Welcome"></activity>
         <activity android:name=".Controller.CheckList" />
         <activity android:name=".Controller.MainActivity">
             <intent-filter>

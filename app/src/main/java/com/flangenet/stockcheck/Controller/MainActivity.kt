@@ -1,21 +1,24 @@
 package com.flangenet.stockcheck.Controller
 
+import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.view.Window
+import android.widget.Button
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.flangenet.stockcheck.Adapter.CheckItemsAdapter
 import com.flangenet.stockcheck.Model.CheckItems
 import com.flangenet.stockcheck.R
-import com.flangenet.stockcheck.Utilities.EXTRA_CHECKLIST_DATE
-import com.flangenet.stockcheck.Utilities.EXTRA_CHECKLIST_TYPE
-import com.flangenet.stockcheck.Utilities.prettyDateFormat
-import com.flangenet.stockcheck.Utilities.sqlDateFormat
+import com.flangenet.stockcheck.Test
+import com.flangenet.stockcheck.Utilities.*
 import kotlinx.android.synthetic.main.activity_main.*
 import java.sql.Connection
 import java.util.*
 import kotlinx.coroutines.*
+
 
 
 class MainActivity : AppCompatActivity() {
@@ -45,6 +48,8 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         refreshData()
     }
+
+
     fun refreshData(){
         txtToday.text = prettyDateFormat.format(selectedDate)
         conn = db.dbConnect()
@@ -70,7 +75,9 @@ class MainActivity : AppCompatActivity() {
             }
 
             val checkListIntent = Intent(this,CheckList::class.java)
-            checkListIntent.putExtra(EXTRA_CHECKLIST_TYPE,(position))
+            checkListIntent.putExtra(EXTRA_CHECKLIST_TYPE,position)
+            checkListIntent.putExtra(EXTRA_CHECKLIST_DESC,lstItems[position].description)
+            println(lstItems[position].description)
             checkListIntent.putExtra(EXTRA_CHECKLIST_DATE,sqlDateFormat.format(selectedDate))
             startActivity(checkListIntent)
         }
@@ -83,11 +90,32 @@ class MainActivity : AppCompatActivity() {
 
 
     fun testButton() {
-        val testIntent = Intent(this,Welcome::class.java)
+        //val testIntent = Intent(this,Welcome::class.java)
+        //startActivity(testIntent)
+        //println(showDialog("Arse Buckets"))
+        val testIntent = Intent(this, Test::class.java)
         startActivity(testIntent)
 
 
     }
+
+    private fun showDialog(title: String) : String{
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setCancelable(false)
+        dialog.setContentView(R.layout.popup_test)
+        val body = dialog .findViewById(R.id.txtBody) as TextView
+        body.text = title
+        val yesBtn = dialog .findViewById(R.id.yesBtn) as Button
+        val noBtn = dialog .findViewById(R.id.noBtn) as Button
+        yesBtn.setOnClickListener { dialog.dismiss() }
+        noBtn.setOnClickListener { dialog.dismiss() }
+        dialog.show()
+        return "Yes"
+
+    }
+
+
     fun testButton2() {
         val checkListIntent = Intent(this,CheckList::class.java)
         checkListIntent.putExtra(EXTRA_CHECKLIST_TYPE,2)

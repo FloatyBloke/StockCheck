@@ -9,11 +9,10 @@
         android:id="@+id/Description"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
         android:layout_marginTop="2dp"
         android:textSize="24sp"
         app:layout_constraintEnd_toStartOf="@+id/txtStock"
-        app:layout_constraintStart_toEndOf="@+id/txtId"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="A slice of pie" />
 
@@ -27,12 +26,4 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:text="Stock Figure" />
 
-    <TextView
-        android:id="@+id/txtId"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="@android:string/VideoView_error_button" />
 </androidx.constraintlayout.widget.ConstraintLayout>

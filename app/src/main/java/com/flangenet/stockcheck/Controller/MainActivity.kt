@@ -7,21 +7,20 @@ import android.view.View
 import android.view.Window
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.flangenet.stockcheck.Adapter.CheckItemsAdapter
 import com.flangenet.stockcheck.Model.CheckItems
 import com.flangenet.stockcheck.R
-import com.flangenet.stockcheck.Test
 import com.flangenet.stockcheck.Utilities.*
 import kotlinx.android.synthetic.main.activity_main.*
 import java.sql.Connection
 import java.util.*
-import kotlinx.coroutines.*
 
 
-
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity() ,NoticeDialogFragment1.NoticeDialogListener {
 
     private  var conn: Connection? = null
     var lstItems = ArrayList<CheckItems>()
@@ -65,19 +64,20 @@ class MainActivity : AppCompatActivity() {
 
             if (recordCount == 0){
                 enableSpinner(true,"Please wait......")
-                GlobalScope.launch(Dispatchers.Main) {
+                println("I'm making a new one $position")
+                //GlobalScope.launch(Dispatchers.Main) {
                     conn = db.dbConnect()
                     db.createBlankStockCheck(conn, position, selectedDate)
                     conn!!.close()
-                }.invokeOnCompletion { println("I'm Back") }
+                //}.invokeOnCompletion { println("I'm Back") }
                 enableSpinner(false,"Please wait......")
                     
             }
 
             val checkListIntent = Intent(this,CheckList::class.java)
             checkListIntent.putExtra(EXTRA_CHECKLIST_TYPE,position)
-            checkListIntent.putExtra(EXTRA_CHECKLIST_DESC,lstItems[position].description)
-            println(lstItems[position].description)
+            checkListIntent.putExtra(EXTRA_CHECKLIST_DESC,lstItems[position-1].description)
+            //println(lstItems[position-1].description)
             checkListIntent.putExtra(EXTRA_CHECKLIST_DATE,sqlDateFormat.format(selectedDate))
             startActivity(checkListIntent)
         }
@@ -93,10 +93,11 @@ class MainActivity : AppCompatActivity() {
         //val testIntent = Intent(this,Welcome::class.java)
         //startActivity(testIntent)
         //println(showDialog("Arse Buckets"))
-        val testIntent = Intent(this, Test::class.java)
+ /*       val testIntent = Intent(this, Test::class.java)
         startActivity(testIntent)
+*/
 
-
+        showNoticeDialog()
     }
 
     private fun showDialog(title: String) : String{
@@ -117,13 +118,14 @@ class MainActivity : AppCompatActivity() {
 
 
     fun testButton2() {
-        val checkListIntent = Intent(this,CheckList::class.java)
+/*        val checkListIntent = Intent(this,CheckList::class.java)
         checkListIntent.putExtra(EXTRA_CHECKLIST_TYPE,2)
         checkListIntent.putExtra(EXTRA_CHECKLIST_DATE,sqlDateFormat.format(selectedDate))
-        startActivity(checkListIntent)
+        startActivity(checkListIntent)*/
         //executeMySQLQuery()
 
         //t?.close()
+
 
     }
     fun changeDate(days:Int){
@@ -148,6 +150,24 @@ class MainActivity : AppCompatActivity() {
         //btnExport.isEnabled = !enable
         //logText.isEnabled = !enable
         //hideKeyboard()
+    }
+
+    fun showNoticeDialog() {
+        // Create an instance of the dialog fragment and show it
+        val dialog = NoticeDialogFragment1()
+        dialog.show(supportFragmentManager, "NoticeDialogFragment")
+    }
+
+    // The dialog fragment receives a reference to this Activity through the
+    // Fragment.onAttach() callback, which it uses to call the following methods
+    // defined by the NoticeDialogFragment.NoticeDialogListener interface
+
+    override fun onDialogPositiveClick(dialog: DialogFragment) {
+        Toast.makeText(this,"Positive Button",Toast.LENGTH_LONG).show()
+    }
+
+    override fun onDialogNegativeClick(dialog: DialogFragment) {
+        Toast.makeText(this,"Negative Button",Toast.LENGTH_LONG).show()
     }
 
 }

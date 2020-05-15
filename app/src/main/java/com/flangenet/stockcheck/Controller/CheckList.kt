@@ -15,14 +15,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.flangenet.stockcheck.Adapter.StockItemsAdapter
 import com.flangenet.stockcheck.Model.StockCheck
 import com.flangenet.stockcheck.R
-import com.flangenet.stockcheck.Utilities.EXTRA_CHECKLIST_DATE
-import com.flangenet.stockcheck.Utilities.EXTRA_CHECKLIST_DESC
-import com.flangenet.stockcheck.Utilities.EXTRA_CHECKLIST_TYPE
+import com.flangenet.stockcheck.Utilities.*
 import kotlinx.android.synthetic.main.activity_check_list.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.sql.Connection
+import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -68,10 +67,7 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
         mTTS = TextToSpeech(this,this)
         mTTS!!.stop()
 
-
         setContentView(R.layout.activity_check_list)
-
-
 
         checkListType = intent.getIntExtra(EXTRA_CHECKLIST_TYPE,1)
         checkListDescription = intent.getStringExtra(EXTRA_CHECKLIST_DESC)
@@ -81,6 +77,8 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
         btnPrevious.setOnClickListener{prevButton()}
         //btnUpdate.setOnClickListener{updateCheck()}
         fabSpeechOutput.setOnClickListener{speechStatusToggle()}
+
+        // Retrieve Stock Check - if screen rotated use passed array
 
         if (savedInstanceState != null){
             //wcDate = sqlDateToDate(savedInstanceState.getString(WEEK_COMMENCING_DATE)!!)
@@ -106,7 +104,7 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
             conn!!.close()
 
         }
-        // Retrieve Stock Check
+
 
         itemsAdapter = StockItemsAdapter(this, lstItems as ArrayList<StockCheck>) { position ->
             // item is clicked
@@ -128,7 +126,8 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         //this.say(intent.getStringExtra(EXTRA_CHECKLIST_TYPE))
         var headerInfo : String = "${checkListDescription} - ${selectedDateText}"
-        txtCheckHeader.text = "${checkListDescription}${System.lineSeparator()}${selectedDateText}"
+
+        txtCheckHeader.text = "${checkListDescription}${System.lineSeparator()}${sqlTextDateToUKDate(selectedDateText)}"
         say(headerInfo)
         enableSpinner(false)
         refreshSelected(selectedPos)
@@ -244,7 +243,6 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (keyCode == KeyEvent.KEYCODE_ENTER){
             println("Enter Pressed")
         }
-
         return super.onKeyDown(keyCode, event)
     }
 
@@ -282,11 +280,16 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
                 refreshSelected(selectedPos)
             } else {
                 edtEntry.setText(results!![0].toString())
-
                 nextButton()
             }
 
         }
+    }
+
+    private fun sqlTextDateToUKDate(sqlTextDate: String) : String {
+        val date = SimpleDateFormat("yyyy-MM-dd").parse(sqlTextDate)
+       // val format = dateFormat
+        return dateFormat.format(date)
     }
 
 

@@ -94,7 +94,7 @@ class DBHelper {
             tList.itemID = rs.getInt(4)
             tList.stock=0f
             listStockCheck.add(tList)
-            //println("${tList.date} : ${tList.typeID} : ${tList.itemID} : ${tList.stock}")
+            println("${tList.date} : ${tList.typeID} : ${tList.itemID} : ${tList.stock}")
         }
 
         // Take array and UPDATE checks with new zero stock check

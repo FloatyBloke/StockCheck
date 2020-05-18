@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android"
+    android:oneshot="false">
+    <item android:drawable="@raw/network_busy01" android:duration="50"/>
+    <item android:drawable="@raw/network_busy02" android:duration="50"/>
+    <item android:drawable="@raw/network_busy03" android:duration="50"/>
+    <item android:drawable="@raw/network_busy04" android:duration="50"/>
+    <item android:drawable="@raw/network_busy05" android:duration="50"/>
+    <item android:drawable="@raw/network_busy06" android:duration="50"/>
+    <item android:drawable="@raw/network_busy07" android:duration="50"/>
+    <item android:drawable="@raw/network_busy08" android:duration="50"/>
+    <item android:drawable="@raw/network_busy09" android:duration="50"/>
+    <item android:drawable="@raw/network_busy10" android:duration="50"/>
+    <item android:drawable="@raw/network_busy11" android:duration="50"/>
+    <item android:drawable="@raw/network_busy12" android:duration="50"/>
+    <item android:drawable="@raw/network_busy13" android:duration="50"/>
+    <item android:drawable="@raw/network_busy14" android:duration="50"/>
+    <item android:drawable="@raw/network_busy15" android:duration="50"/>
+    <item android:drawable="@raw/network_busy16" android:duration="50"/>
+    <item android:drawable="@raw/network_busy17" android:duration="50"/>
+    <item android:drawable="@raw/network_busy18" android:duration="50"/>
+    <item android:drawable="@raw/network_busy19" android:duration="50"/>
+    <item android:drawable="@raw/network_busy20" android:duration="50"/>
+    <item android:drawable="@raw/network_busy21" android:duration="50"/>
+    <item android:drawable="@raw/network_busy22" android:duration="50"/>
+    <item android:drawable="@raw/network_busy23" android:duration="50"/>
+    <item android:drawable="@raw/network_busy24" android:duration="50"/>
+    <item android:drawable="@raw/network_busy25" android:duration="50"/>
+    <item android:drawable="@raw/network_busy26" android:duration="50"/>
+    <item android:drawable="@raw/network_busy27" android:duration="50"/>
+    <item android:drawable="@raw/network_busy28" android:duration="50"/>
+    <item android:drawable="@raw/network_busy29" android:duration="50"/>
+    <item android:drawable="@raw/network_busy30" android:duration="50"/>
+    <item android:drawable="@raw/network_busy31" android:duration="50"/>
+    <item android:drawable="@raw/network_busy32" android:duration="50"/>
+    <item android:drawable="@raw/network_busy33" android:duration="50"/>
+    <item android:drawable="@raw/network_busy34" android:duration="50"/>
+    <item android:drawable="@raw/network_busy35" android:duration="50"/>
+    <item android:drawable="@raw/network_busy36" android:duration="50"/>
+    <item android:drawable="@raw/network_busy37" android:duration="50"/>
+
+</animation-list>

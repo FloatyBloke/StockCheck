@@ -13,8 +13,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Test"></activity>
-        <activity android:name=".Controller.Welcome"></activity>
+        <activity android:name=".CustomDialog"></activity>
+        <activity android:name=".Test" />
+        <activity android:name=".Controller.Welcome" />
         <activity android:name=".Controller.CheckList" />
         <activity android:name=".Controller.MainActivity">
             <intent-filter>

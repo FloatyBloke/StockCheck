@@ -1,26 +1,32 @@
 package com.flangenet.stockcheck.Controller
 
+import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.view.Window
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.flangenet.stockcheck.Adapter.CheckItemsAdapter
 import com.flangenet.stockcheck.Model.CheckItems
 import com.flangenet.stockcheck.R
+import com.flangenet.stockcheck.Test
 import com.flangenet.stockcheck.Utilities.*
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_main.view.*
+import kotlinx.android.synthetic.main.alert_dialog_with_edittext.*
+import kotlinx.coroutines.*
+import java.lang.Exception
 import java.sql.Connection
 import java.util.*
 
 
-class MainActivity : AppCompatActivity() ,NoticeDialogFragment1.NoticeDialogListener {
+class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
 
     private  var conn: Connection? = null
     var lstItems = ArrayList<CheckItems>()
@@ -37,23 +43,66 @@ class MainActivity : AppCompatActivity() ,NoticeDialogFragment1.NoticeDialogList
         btnNextWeek.setOnClickListener { changeDate(1) }
         btnPrevWeek.setOnClickListener { changeDate(-1) }
         //getConnection()
-        enableSpinner(false,"Info")
-
-
-
+        //enableSpinner(false,"Info")
     }
 
     override fun onResume() {
         super.onResume()
         refreshData()
+
     }
 
 
-    fun refreshData(){
-        txtToday.text = prettyDateFormat.format(selectedDate)
-        conn = db.dbConnect()
-        lstItems = db.getChecks(conn, selectedDate)
-        conn!!.close()
+      fun refreshData() {
+         txtToday.text = prettyDateFormat.format(selectedDate)
+         recyclerCheckItems.layoutManager = null
+         enableSpinner(true,"Loading...")
+         var jobSuccess = false
+         //runBlocking {
+             //val job = launch(Dispatchers.IO) {
+
+          val t = GlobalScope.launch (Dispatchers.IO) {
+              conn = db.dbConnect()
+              lstItems = db.getChecks(conn,selectedDate)
+
+              conn!!.close()
+              jobSuccess = true
+          }.invokeOnCompletion {
+              println("Out.....................")
+              jobSuccess = true
+              this@MainActivity.runOnUiThread(java.lang.Runnable {
+                  this.refreshDataComplete(jobSuccess)
+              })
+
+          }
+ /*                try {
+                     conn = db.dbConnect()
+                     lstItems = db.getChecks(conn,selectedDate)
+                     jobSuccess = true
+                 } catch(e:Exception) {
+                     println(e.message)
+                 }
+                 finally {
+                     conn!!.close()
+                 }
+                 println("Dropped out of the block")
+
+             //}
+             //job.cancelAndJoin()
+         refreshDataComplete(jobSuccess)*/
+
+     }
+
+    fun refreshDataComplete(jobSuccess: Boolean){
+        if (jobSuccess) {
+            enableSpinner(false, "Done")
+            refreshDataSuccess()
+        } else {
+            Toast.makeText(applicationContext,"Connection Failed...",Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun refreshDataSuccess(){
 
         itemsAdapter = CheckItemsAdapter(this, lstItems as ArrayList<CheckItems>) { position,recordCount ->
             // item is clicked
@@ -65,13 +114,27 @@ class MainActivity : AppCompatActivity() ,NoticeDialogFragment1.NoticeDialogList
             if (recordCount == 0){
                 enableSpinner(true,"Please wait......")
                 println("I'm making a new one $position")
-                //GlobalScope.launch(Dispatchers.Main) {
-                    conn = db.dbConnect()
-                    db.createBlankStockCheck(conn, position, selectedDate)
-                    conn!!.close()
-                //}.invokeOnCompletion { println("I'm Back") }
+
+                    //conn = db.dbConnect()
+                    //db.createBlankStockCheck(conn, position, selectedDate)
+                    //conn!!.close()
+
+                //runBlocking {
+                    val job = launch{
+                        try {
+                            //Do Work
+                            conn = db.dbConnect()
+                            db.createBlankStockCheck(conn, position, selectedDate)
+
+                        } finally {
+                            // cleanup if cancelled
+                            conn!!.close()
+                        }
+                    }
+                    //job.cancelAndJoin()
+                    println("I'm Back")
+                //}
                 enableSpinner(false,"Please wait......")
-                    
             }
 
             val checkListIntent = Intent(this,CheckList::class.java)
@@ -90,14 +153,17 @@ class MainActivity : AppCompatActivity() ,NoticeDialogFragment1.NoticeDialogList
 
 
     fun testButton() {
-        //val testIntent = Intent(this,Welcome::class.java)
-        //startActivity(testIntent)
+        val testIntent = Intent(this, Test::class.java)
+        //testIntent
+        startActivity(testIntent)
         //println(showDialog("Arse Buckets"))
  /*       val testIntent = Intent(this, Test::class.java)
         startActivity(testIntent)
 */
 
-        showNoticeDialog()
+        //showDialog("Hello")
+        //withEditText()
+
     }
 
     private fun showDialog(title: String) : String{
@@ -109,13 +175,21 @@ class MainActivity : AppCompatActivity() ,NoticeDialogFragment1.NoticeDialogList
         body.text = title
         val yesBtn = dialog .findViewById(R.id.yesBtn) as Button
         val noBtn = dialog .findViewById(R.id.noBtn) as Button
-        yesBtn.setOnClickListener { dialog.dismiss() }
+        yesBtn.setOnClickListener {
+            doSummatLater()
+            dialog.dismiss() }
         noBtn.setOnClickListener { dialog.dismiss() }
+
         dialog.show()
+        println("pPPPPPPPpPPPPPpppPLLLLlllLlLll")
         return "Yes"
+
 
     }
 
+    fun doSummatLater(){
+        Toast.makeText(this,"Doing summat later",Toast.LENGTH_LONG).show()
+    }
 
     fun testButton2() {
 /*        val checkListIntent = Intent(this,CheckList::class.java)
@@ -139,9 +213,11 @@ class MainActivity : AppCompatActivity() ,NoticeDialogFragment1.NoticeDialogList
     private fun enableSpinner(enable: Boolean, info: String) {
         txtInfo.text = info
         if (enable) {
+            cvProgress.visibility = View.VISIBLE
             progressBar.visibility = View.VISIBLE
             txtInfo.visibility = View.VISIBLE
         } else {
+            cvProgress.visibility = View.INVISIBLE
             progressBar.visibility = View.INVISIBLE
             txtInfo.visibility = View.INVISIBLE
         }
@@ -152,22 +228,20 @@ class MainActivity : AppCompatActivity() ,NoticeDialogFragment1.NoticeDialogList
         //hideKeyboard()
     }
 
-    fun showNoticeDialog() {
-        // Create an instance of the dialog fragment and show it
-        val dialog = NoticeDialogFragment1()
-        dialog.show(supportFragmentManager, "NoticeDialogFragment")
+
+    fun withEditText() {
+        val builder = AlertDialog.Builder(this)
+        val inflater = layoutInflater
+        builder.setTitle("With EditText")
+        val dialogLayout = inflater.inflate(R.layout.alert_dialog_with_edittext, null)
+        val editText  = dialogLayout.findViewById<EditText>(R.id.editText)
+        builder.setView(dialogLayout)
+        builder.setCancelable(false)
+        builder.setPositiveButton("OK") { dialogInterface, i -> Toast.makeText(applicationContext, "EditText is " + editText.text.toString(), Toast.LENGTH_SHORT).show() }
+        builder.show()
     }
 
-    // The dialog fragment receives a reference to this Activity through the
-    // Fragment.onAttach() callback, which it uses to call the following methods
-    // defined by the NoticeDialogFragment.NoticeDialogListener interface
 
-    override fun onDialogPositiveClick(dialog: DialogFragment) {
-        Toast.makeText(this,"Positive Button",Toast.LENGTH_LONG).show()
-    }
 
-    override fun onDialogNegativeClick(dialog: DialogFragment) {
-        Toast.makeText(this,"Negative Button",Toast.LENGTH_LONG).show()
-    }
 
 }

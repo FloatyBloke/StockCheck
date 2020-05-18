@@ -18,8 +18,8 @@ class DBHelper {
 
 
     fun dbConnect () : Connection? {
-        val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
-        StrictMode.setThreadPolicy(policy)
+        //val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
+        //StrictMode.setThreadPolicy(policy)
         var conn : Connection? = null
         var connString : String? = null
         try {
@@ -195,6 +195,8 @@ class DBHelper {
 
     }
 
+
+
     fun updateCheck(conn: Connection,checkID:Int, checkStock: Float){
 /*        val statement: Statement = conn!!.createStatement()
         var checkSQL = "UPDATE checks SET stock='$checkStock' WHERE id=$checkID;"
@@ -205,4 +207,6 @@ class DBHelper {
         var i = ps.executeUpdate()
     }
 }
+
+
 

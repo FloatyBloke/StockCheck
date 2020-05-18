@@ -17,9 +17,7 @@ import com.flangenet.stockcheck.Model.StockCheck
 import com.flangenet.stockcheck.R
 import com.flangenet.stockcheck.Utilities.*
 import kotlinx.android.synthetic.main.activity_check_list.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.sql.Connection
 import java.text.SimpleDateFormat
 import java.util.*
@@ -202,16 +200,61 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun updateCheck(){
         val db = DBHelper()
-        conn = db.dbConnect()
+        //conn = db.dbConnect()
         enableSpinner(true)
-        GlobalScope.launch(Dispatchers.IO){
+/*        GlobalScope.launch(Dispatchers.IO){
             lstItems.forEach{
                 db.updateCheck(conn!!,it.checkID,it.stock)
                 //println("${it.checkID} , ${it.stock}")
             }
             conn!!.close()
-        }.invokeOnCompletion { println("I'm Back") }
+        }.invokeOnCompletion { println("I'm Back") }*/
 
+        var jobSuccess = false
+        //runBlocking {
+        //val job = launch(Dispatchers.IO) {
+
+        val t = GlobalScope.launch (Dispatchers.IO) {
+            conn = db.dbConnect()
+            lstItems.forEach{
+                db.updateCheck(conn!!,it.checkID,it.stock)
+                //println("${it.checkID} , ${it.stock}")
+            }
+            conn!!.close()
+            jobSuccess = true
+        }.invokeOnCompletion {
+            println("Out.....................")
+            jobSuccess = true
+            this@CheckList.runOnUiThread(java.lang.Runnable {
+                this.updateDataComplete(jobSuccess)
+            })
+
+        }
+
+/*
+        runBlocking {
+            val job = launch{
+                try {
+                    //Do Work
+                    lstItems.forEach{
+                        db.updateCheck(conn!!,it.checkID,it.stock)
+                        //println("${it.checkID} , ${it.stock}")
+                    }
+                } finally {
+                    // cleanup if cancelled
+                    conn!!.close()
+                }
+            }
+            job.cancelAndJoin()
+            println("I'm Back")
+        }
+*/
+
+        //enableSpinner(false)
+
+    }
+
+    fun updateDataComplete(jobSuccess: Boolean){
         enableSpinner(false)
 
     }

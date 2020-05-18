@@ -80,8 +80,6 @@ class Welcome : AppCompatActivity() {
     }
 
 
-
-
     fun checksComplete(outputInfo2: String){
 
         addLog(outputInfo2)

@@ -76,6 +76,7 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener, CoroutineSco
         checkListType = intent.getIntExtra(EXTRA_CHECKLIST_TYPE, 1)
         checkListDescription = intent.getStringExtra(EXTRA_CHECKLIST_DESC)
         selectedDateText = intent.getStringExtra(EXTRA_CHECKLIST_DATE)
+        lstItems = intent.getParcelableArrayListExtra(EXTRA_CHECK_ARRAY)
 
         btnNext.setOnClickListener { nextButton() }
         btnPrevious.setOnClickListener { prevButton() }
@@ -109,40 +110,8 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener, CoroutineSco
                 counter += 1
             }
             println("Passed Position : $selectedPos")
-            readingStockCheckComplete()
-        } else {
-/*            val db = DBHelper()
-            conn = db.dbConnect()
-            lstItems = db.getStockCheck(conn, checkListType, selectedDateText)
-            conn!!.close()*/
-
-            lstItems = readStockCheck(checkListType, selectedDateText)
-
-            if (jobSuccess) {
-                readingStockCheckComplete()
-            }
-
-/*            Thread.sleep(1000)
-            val t = launch(Dispatchers.IO) {
-                this@CheckList.runOnUiThread { enableSpinner(true,"Reading check stock...") }
-                lstItems = readStockCheck(checkListType, selectedDateText)
-                println(lstItems.toString())
-            }.invokeOnCompletion {
-                println("Out.....................")
-                if (jobSuccess) {
-                    this@CheckList.runOnUiThread(java.lang.Runnable {
-                        this.readingStockCheckComplete()
-                    })
-                }
-
-
-            }*/
-
         }
-        println("Dropped out the bottom")
-    }
 
-    fun readingStockCheckComplete(){
 
         itemsAdapter = StockItemsAdapter(this, lstItems as ArrayList<StockCheck>) { position ->
             // item is clicked
@@ -159,7 +128,6 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener, CoroutineSco
 
         txtCheckHeader.text = "${checkListDescription}${System.lineSeparator()}${sqlTextDateToUKDate(selectedDateText)}"
         say(headerInfo)
-        enableSpinner(false,"Reading stock check complete :)")
         refreshSelected(selectedPos)
     }
 
@@ -230,43 +198,16 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener, CoroutineSco
         refreshSelected(selectedPos-1)
     }
 
-    private fun updateCheck(){
-        val db = DBHelper()
-        //conn = db.dbConnect()
-        //enableSpinner(true, "Updating stock check......")
-        val dlg = dlgUpdate("Updating stock check....")
-        jobSuccess = false
-
-        val t = launch (Dispatchers.IO) {
-            try{
-                conn = db.dbConnect()
-                lstItems.forEach{
-                    db.updateCheck(conn!!,it.checkID,it.stock)
-                    //println("${it.checkID} , ${it.stock}")
-                }
-                conn!!.close()
-                jobSuccess = true
-            } catch (e:Exception){
-                Log.e("updateCheck",e.message)
-            }
-
-        }.invokeOnCompletion {
-            println("Out.....................")
-            this@CheckList.runOnUiThread(java.lang.Runnable {
-                dlg.dismiss()
-                this.updateCheckComplete(jobSuccess)
-            })
-        }
-    }
-
-    fun updateCheckComplete(jobSuccess: Boolean){
-        if (jobSuccess) {
-            enableSpinner(false, "Updating data complete :)")
-        } else {
-            Toast.makeText(this,"Update failed...",Toast.LENGTH_LONG).show()
-        }
+    private fun updateStockCheck(){
+        // put array back to parent intent
+        val resultIntent = Intent()
+        resultIntent.putParcelableArrayListExtra("keyName", lstItems)
+        setResult(Activity.RESULT_OK, resultIntent)
+        Log.d("TRACKING","About to return to MainActivity :)")
         finish()
     }
+
+
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
@@ -289,8 +230,9 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener, CoroutineSco
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK){
-            println("BACK IN TIME")
-            updateCheck()
+            // Back button pressed , Exit from activity
+            println("Back button pressed")
+            updateStockCheck()
         }
         if (keyCode == KeyEvent.KEYCODE_ENTER){
             println("Enter Pressed")
@@ -298,22 +240,7 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener, CoroutineSco
         return super.onKeyDown(keyCode, event)
     }
 
-    private fun enableSpinner(enable: Boolean, info: String) {
-        Log.d("Spinner","$enable - $info")
-        txtInfoCheck.text = info
-        if (enable) {
-            llProgressBar.visibility = View.VISIBLE
-            txtInfoCheck.visibility = View.VISIBLE
-        } else {
-            llProgressBar.visibility = View.INVISIBLE
-            txtInfoCheck.visibility = View.INVISIBLE
-        }
 
-        btnNext.isEnabled = !enable
-        btnPrevious.isEnabled = !enable
-        edtEntry.isEnabled = !enable
-        //hideKeyboard()
-    }
     private fun askSpeechInput() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
@@ -344,64 +271,6 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener, CoroutineSco
         val date = SimpleDateFormat("yyyy-MM-dd").parse(sqlTextDate)
        // val format = dateFormat
         return dateFormat.format(date)
-    }
-
-    fun readStockCheck (checkListType: Int, selectedDateText: String): ArrayList<StockCheck>{
-        println("$checkListType - $selectedDateText")
-        val dlgRead = dlgReadStockCheck("Reading Stock Check...")
-        jobSuccess = false
-        try {
-            val db = DBHelper()
-            conn = db.dbConnect()
-            lstItems = db.getStockCheck(conn, checkListType, selectedDateText)
-            //conn!!.close()
-            jobSuccess = true
-            conn!!.close()
-        } catch (e:Exception){
-            Log.e("Error","Reading stock check failed :(")
-            this@CheckList.runOnUiThread(java.lang.Runnable {Toast.makeText(this,"Reading stock check failed :(", Toast.LENGTH_LONG).show()})
-        }
-        dlgRead.dismiss()
-
-        return lstItems
-
-    }
-
-
-    private fun dlgUpdate(title: String) : Dialog {
-        val dialog = Dialog(this)
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        dialog.setCancelable(false)
-        dialog.setContentView(R.layout.progress_popup)
-        val info = dialog.findViewById(R.id.txtInfo) as TextView
-        info.text = title
-
-        val btnCancel = dialog.findViewById(R.id.btnCancel) as Button
-/*        yesBtn.setOnClickListener {
-            doSummatLater()
-            dialog.dismiss() }*/
-        btnCancel.setOnClickListener { dialog.dismiss() }
-
-        dialog.show()
-        return dialog
-    }
-
-    private fun dlgReadStockCheck(title: String) : Dialog {
-        val dialog = Dialog(this)
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        dialog.setCancelable(false)
-        dialog.setContentView(R.layout.progress_popup)
-        val info = dialog.findViewById(R.id.txtInfo) as TextView
-        info.text = title
-
-        val btnCancel = dialog.findViewById(R.id.btnCancel) as Button
-/*        yesBtn.setOnClickListener {
-            doSummatLater()
-            dialog.dismiss() }*/
-        btnCancel.setOnClickListener { dialog.dismiss() }
-
-        dialog.show()
-        return dialog
     }
 
 }

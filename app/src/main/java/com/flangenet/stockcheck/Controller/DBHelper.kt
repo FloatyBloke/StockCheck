@@ -2,6 +2,7 @@ package com.flangenet.stockcheck.Controller
 
 import android.os.StrictMode
 import android.util.Log
+import android.widget.Toast
 import com.flangenet.stockcheck.Model.CheckItems
 import com.flangenet.stockcheck.Model.StockCheck
 import com.flangenet.stockcheck.Model.ChecksDB
@@ -169,7 +170,7 @@ class DBHelper {
 
     }
 
-    fun getChecks(conn: Connection?, selectedDate:Date): ArrayList<CheckItems>{
+    fun getListOfStockChecks(conn: Connection?, selectedDate:Date): ArrayList<CheckItems>{
         val listChecks = ArrayList<CheckItems>()
 
         val statement: Statement = conn!!.createStatement()
@@ -197,7 +198,7 @@ class DBHelper {
 
 
 
-    fun updateCheck(conn: Connection,checkID:Int, checkStock: Float){
+    fun updateStockCheckItem(conn: Connection, checkID:Int, checkStock: Float){
 /*        val statement: Statement = conn!!.createStatement()
         var checkSQL = "UPDATE checks SET stock='$checkStock' WHERE id=$checkID;"
         statement.execute(checkSQL)
@@ -206,6 +207,18 @@ class DBHelper {
         val ps: PreparedStatement = conn.prepareStatement("UPDATE checks SET stock=$checkStock WHERE id=$checkID")
         var i = ps.executeUpdate()
     }
+
+    fun updateStockCheck(conn: Connection, lstItems: ArrayList<StockCheck>){
+
+        var ps: PreparedStatement
+
+        lstItems.forEach{
+            ps = conn.prepareStatement("UPDATE checks SET stock=${it.stock} WHERE id=${it.checkID}")
+            var i = ps.executeUpdate()
+        }
+    }
+
+
 }
 
 

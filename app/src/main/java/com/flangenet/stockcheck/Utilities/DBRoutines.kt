@@ -11,7 +11,7 @@ suspend fun getChecks3(selectedDate:Date) : ArrayList<CheckItems> {
     val db = DBHelper()
 
     conn = db.dbConnect()
-    lstItems = db.getChecks(conn,selectedDate)
+    lstItems = db.getListOfStockChecks(conn,selectedDate)
     conn!!.close()
 
     return lstItems

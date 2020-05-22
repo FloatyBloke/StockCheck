@@ -16,6 +16,7 @@
         <activity android:name=".CustomDialog"></activity>
         <activity android:name=".Test" />
         <activity android:name=".Controller.Welcome" />
+        <activity android:name=".BlankFragment" />
         <activity android:name=".Controller.CheckList" />
         <activity android:name=".Controller.MainActivity">
             <intent-filter>

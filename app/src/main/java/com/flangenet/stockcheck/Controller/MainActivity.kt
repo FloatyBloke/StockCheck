@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.Window
 import android.widget.Button
@@ -11,29 +12,34 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.FragmentTransaction
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.flangenet.stockcheck.Adapter.CheckItemsAdapter
+import com.flangenet.stockcheck.BlankFragment
 import com.flangenet.stockcheck.Model.CheckItems
 import com.flangenet.stockcheck.R
 import com.flangenet.stockcheck.Test
 import com.flangenet.stockcheck.Utilities.*
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.activity_main.view.*
-import kotlinx.android.synthetic.main.alert_dialog_with_edittext.*
-import kotlinx.coroutines.*
-import java.lang.Exception
+import kotlinx.android.synthetic.main.progress_bit.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import java.sql.Connection
 import java.util.*
+import kotlin.concurrent.thread
 
 
 class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
 
-    private  var conn: Connection? = null
+
     var lstItems = ArrayList<CheckItems>()
     lateinit var itemsAdapter: CheckItemsAdapter
-    val db = DBHelper()
-    var selectedDate = Date()
 
+    var selectedDate = Date()
+    var jobSuccess = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,59 +49,41 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
         btnNextWeek.setOnClickListener { changeDate(1) }
         btnPrevWeek.setOnClickListener { changeDate(-1) }
         //getConnection()
-        //enableSpinner(false,"Info")
+
+
     }
 
     override fun onResume() {
         super.onResume()
+        enableSpinner(false,"Starting off busy")
         refreshData()
 
     }
 
 
-      fun refreshData() {
-         txtToday.text = prettyDateFormat.format(selectedDate)
-         recyclerCheckItems.layoutManager = null
-         enableSpinner(true,"Loading...")
-         var jobSuccess = false
-         //runBlocking {
-             //val job = launch(Dispatchers.IO) {
 
-          val t = GlobalScope.launch (Dispatchers.IO) {
-              conn = db.dbConnect()
-              lstItems = db.getChecks(conn,selectedDate)
+    fun refreshData() {
+        txtToday.text = prettyDateFormat.format(selectedDate)
+        recyclerCheckItems.layoutManager = null
 
-              conn!!.close()
-              jobSuccess = true
-          }.invokeOnCompletion {
-              println("Out.....................")
-              jobSuccess = true
-              this@MainActivity.runOnUiThread(java.lang.Runnable {
-                  this.refreshDataComplete(jobSuccess)
-              })
+        val dlg = showDialog("Loading stock checks....")
+        val t = launch (Dispatchers.IO) {
+            //this@MainActivity.runOnUiThread{enableSpinner(true,"Loading stock checks....")}
+            val lstItems = getChecks2(selectedDate)
+        }.invokeOnCompletion {
+            println("Out.....................")
+            this@MainActivity.runOnUiThread(java.lang.Runnable {this.refreshDataComplete(jobSuccess)})
+            dlg.dismiss()
+        }
 
-          }
- /*                try {
-                     conn = db.dbConnect()
-                     lstItems = db.getChecks(conn,selectedDate)
-                     jobSuccess = true
-                 } catch(e:Exception) {
-                     println(e.message)
-                 }
-                 finally {
-                     conn!!.close()
-                 }
-                 println("Dropped out of the block")
 
-             //}
-             //job.cancelAndJoin()
-         refreshDataComplete(jobSuccess)*/
+        println("Back in the room?")
 
-     }
+    }
 
     fun refreshDataComplete(jobSuccess: Boolean){
         if (jobSuccess) {
-            enableSpinner(false, "Done")
+            this@MainActivity.runOnUiThread{enableSpinner(false, "Done")}
             refreshDataSuccess()
         } else {
             Toast.makeText(applicationContext,"Connection Failed...",Toast.LENGTH_LONG).show()
@@ -112,37 +100,32 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
             // Create a new zeroed stock check if none exists
 
             if (recordCount == 0){
-                enableSpinner(true,"Please wait......")
+                //enableSpinner(true,"Creating new blank stock check ... ")
+                recyclerCheckItems.layoutManager = null
                 println("I'm making a new one $position")
+/*                val jobDeferred = async {
+                    createBlankStockCheck2(position, selectedDate)
+                    createBlankStockCheckComplete(position)
+                }*/
+                val dlg = showDialog("Creating blank stock check....")
+                val t = launch (Dispatchers.IO) {
+                    //this@MainActivity.runOnUiThread{enableSpinner(true,"Creating new blank stock check....")}
+                    createBlankStockCheck2(position, selectedDate)
+                }.invokeOnCompletion {
+                    println("Out.....................")
+                    dlg.dismiss()
+                    this@MainActivity.runOnUiThread(java.lang.Runnable {this.createBlankStockCheckComplete(position)})
+                }
 
-                    //conn = db.dbConnect()
-                    //db.createBlankStockCheck(conn, position, selectedDate)
-                    //conn!!.close()
 
-                //runBlocking {
-                    val job = launch{
-                        try {
-                            //Do Work
-                            conn = db.dbConnect()
-                            db.createBlankStockCheck(conn, position, selectedDate)
 
-                        } finally {
-                            // cleanup if cancelled
-                            conn!!.close()
-                        }
-                    }
-                    //job.cancelAndJoin()
-                    println("I'm Back")
-                //}
-                enableSpinner(false,"Please wait......")
+            } else {
+                val dlg= showDialog("Opening Stock Check")
+                openStockCheck(position)
+                dlg.dismiss()
             }
 
-            val checkListIntent = Intent(this,CheckList::class.java)
-            checkListIntent.putExtra(EXTRA_CHECKLIST_TYPE,position)
-            checkListIntent.putExtra(EXTRA_CHECKLIST_DESC,lstItems[position-1].description)
-            //println(lstItems[position-1].description)
-            checkListIntent.putExtra(EXTRA_CHECKLIST_DATE,sqlDateFormat.format(selectedDate))
-            startActivity(checkListIntent)
+
         }
 
         recyclerCheckItems.adapter = itemsAdapter
@@ -151,40 +134,69 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
 
     }
 
+    fun createBlankStockCheckComplete(position: Int){
+        if (jobSuccess){
+            enableSpinner(false,"Back from creating new blank stock check - Success")
+            openStockCheck(position)
+        } else {
+            enableSpinner(false,"Back from creating new blank stock check - Failure")
+            Toast.makeText(this,"Error creating new blank Stock check", Toast.LENGTH_LONG).show()
+        }
 
-    fun testButton() {
-        val testIntent = Intent(this, Test::class.java)
-        //testIntent
-        startActivity(testIntent)
-        //println(showDialog("Arse Buckets"))
- /*       val testIntent = Intent(this, Test::class.java)
-        startActivity(testIntent)
-*/
-
-        //showDialog("Hello")
-        //withEditText()
 
     }
 
-    private fun showDialog(title: String) : String{
+    fun openStockCheck(position : Int){
+        val checkListIntent = Intent(this,CheckList::class.java)
+        checkListIntent.putExtra(EXTRA_CHECKLIST_TYPE,position)
+        checkListIntent.putExtra(EXTRA_CHECKLIST_DESC,lstItems[position-1].description)
+        //println(lstItems[position-1].description)
+        checkListIntent.putExtra(EXTRA_CHECKLIST_DATE,sqlDateFormat.format(selectedDate))
+        startActivity(checkListIntent)
+    }
+
+    fun testButton() {
+        //val testIntent = Intent(this, Test::class.java)
+        //testIntent
+        //startActivity(testIntent)
+        //println(showDialog("Arse Buckets"))
+/*        val testIntent = Intent(this, Test::class.java)
+        startActivity(testIntent)*/
+
+
+
+        //recyclerCheckItems.layoutManager = null
+        //runOnUiThread{enableSpinner(true,"Arse")}
+        //showDialog("Hello")
+        //withEditText()
+        showDialog("Loading stock check list...")
+
+
+
+    }
+
+
+
+
+
+    private fun showDialog(title: String) : Dialog {
         val dialog = Dialog(this)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         dialog.setCancelable(false)
-        dialog.setContentView(R.layout.popup_test)
-        val body = dialog .findViewById(R.id.txtBody) as TextView
-        body.text = title
-        val yesBtn = dialog .findViewById(R.id.yesBtn) as Button
-        val noBtn = dialog .findViewById(R.id.noBtn) as Button
-        yesBtn.setOnClickListener {
-            doSummatLater()
-            dialog.dismiss() }
-        noBtn.setOnClickListener { dialog.dismiss() }
+        dialog.setContentView(R.layout.progress_popup)
+        val info = dialog.findViewById(R.id.txtInfo) as TextView
+        info.text = title
 
+        val btnCancel = dialog.findViewById(R.id.btnCancel) as Button
+/*        yesBtn.setOnClickListener {
+            doSummatLater()
+            dialog.dismiss() }*/
+        btnCancel.setOnClickListener { dialog.dismiss() }
+
+        Thread.sleep(1000)
         dialog.show()
         println("pPPPPPPPpPPPPPpppPLLLLlllLlLll")
-        return "Yes"
-
-
+        return dialog
     }
 
     fun doSummatLater(){
@@ -212,14 +224,15 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
 
     private fun enableSpinner(enable: Boolean, info: String) {
         txtInfo.text = info
+        Log.d("Spinner","$enable - $info")
         if (enable) {
-            cvProgress.visibility = View.VISIBLE
-            progressBar.visibility = View.VISIBLE
-            txtInfo.visibility = View.VISIBLE
+            llProgressBar.visibility = View.VISIBLE
+            //progressBar.visibility = View.VISIBLE
+            //txtInfo.visibility = View.VISIBLE
         } else {
-            cvProgress.visibility = View.INVISIBLE
-            progressBar.visibility = View.INVISIBLE
-            txtInfo.visibility = View.INVISIBLE
+            llProgressBar.visibility = View.GONE
+            //progressBar.visibility = View.INVISIBLE
+            //txtInfo.visibility = View.INVISIBLE
         }
 
         //btnImport.isEnabled = !enable
@@ -229,19 +242,45 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
     }
 
 
-    fun withEditText() {
-        val builder = AlertDialog.Builder(this)
-        val inflater = layoutInflater
-        builder.setTitle("With EditText")
-        val dialogLayout = inflater.inflate(R.layout.alert_dialog_with_edittext, null)
-        val editText  = dialogLayout.findViewById<EditText>(R.id.editText)
-        builder.setView(dialogLayout)
-        builder.setCancelable(false)
-        builder.setPositiveButton("OK") { dialogInterface, i -> Toast.makeText(applicationContext, "EditText is " + editText.text.toString(), Toast.LENGTH_SHORT).show() }
-        builder.show()
+
+
+    fun getChecks2(selectedDate:Date) : ArrayList<CheckItems> {
+
+         val db = DBHelper()
+         var conn: Connection? = null
+
+         jobSuccess=false
+             try {
+                 conn = db.dbConnect()
+                 lstItems = db.getChecks(conn,selectedDate)
+                 conn!!.close()
+                 jobSuccess = true
+             } catch (e:Exception){
+                 println(e.message)
+             }
+        return lstItems
     }
 
+    fun createBlankStockCheck2(position: Int, selectedDate: Date) : Boolean{
 
+
+        val db = DBHelper()
+        var conn: Connection? = null
+
+        jobSuccess = false
+
+        try {
+            conn = db.dbConnect()
+            db.createBlankStockCheck(conn, position, selectedDate)
+            jobSuccess = true
+        } catch (e:Exception){
+            println(e.message)
+        } finally {
+            // cleanup if cancelled
+            conn!!.close()
+        }
+        return jobSuccess
+    }
 
 
 }

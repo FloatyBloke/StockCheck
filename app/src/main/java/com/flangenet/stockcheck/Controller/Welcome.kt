@@ -49,9 +49,7 @@ class Welcome : AppCompatActivity() {
         }.invokeOnCompletion {
             println("Out.....................")
             connectFlag = true
-            this@Welcome.runOnUiThread(java.lang.Runnable {
-                this.checksComplete("Completed connection test")
-            })
+            this@Welcome.runOnUiThread(java.lang.Runnable {this.checksComplete("Completed connection test")})
 
         }
 

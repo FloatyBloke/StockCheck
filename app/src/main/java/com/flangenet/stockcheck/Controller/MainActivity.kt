@@ -33,9 +33,10 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
 
     var lstItems = ArrayList<CheckItems>()
     lateinit var itemsAdapter: CheckItemsAdapter
-
+    val bob = getStockChecksList()
     var selectedDate = Date()
     var jobSuccess = false
+    var dlg: Dialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,7 +46,23 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
         btnNextWeek.setOnClickListener { changeDate(1) }
         btnPrevWeek.setOnClickListener { changeDate(-1) }
 
+        bob.addObserver(GetChecksListObserver())
 
+    }
+    inner class GetChecksListObserver : Observer {
+
+        override fun update(o: Observable?, arg: Any?) {
+            val bob : getStockChecksList = arg as getStockChecksList
+            println("I'm back from something ${bob.lstItems} - ${bob.jobSuccess}")
+            enableSpinner(false,"Dood it :)")
+
+            if (bob.jobSuccess) {
+                lstItems = bob.lstItems
+                refreshDataPart2()
+            } else {
+                Toast.makeText(applicationContext, "Connection Failed...", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     override fun onResume() {
@@ -59,47 +76,51 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
     fun refreshData() {
         txtToday.text = prettyDateFormat.format(selectedDate)
         recyclerCheckItems.layoutManager = null
+        this@MainActivity.runOnUiThread {dlg = showDialog("Arse Buckets")}
+        this@MainActivity.runOnUiThread { enableSpinner(true, "Loading stock check list....") }
+        bob.getStockChecksListObservable(selectedDate)
 
-        val dlg = showDialog("Loading stock checks....")
-        val t = launch (Dispatchers.IO) {
-            //this@MainActivity.runOnUiThread{enableSpinner(true,"Loading stock checks....")}
-            val lstItems = getChecks2(selectedDate)
-        }.invokeOnCompletion {
-            println("Out.....................")
-            this@MainActivity.runOnUiThread(java.lang.Runnable {this.refreshDataComplete(jobSuccess)})
-            dlg.dismiss()
-        }
-        println("Back in the room?")
-    }
 
-    fun refreshDataComplete(jobSuccess: Boolean){
-        if (jobSuccess) {
-            this@MainActivity.runOnUiThread{enableSpinner(false, "Done")}
-            refreshDataSuccess()
+
+        //val dlg = showDialog("Loading stock checks....")
+
+/*        this@MainActivity.runOnUiThread { enableSpinner(true, "Loading stock check list....") }
+        val (tempItems, jobSuccess2) = getStockChecksList(selectedDate)
+        println("${tempItems.count()} - $jobSuccess")
+        lstItems = tempItems
+        if (jobSuccess2) {
+            lstItems = tempItems
         } else {
-            Toast.makeText(applicationContext,"Connection Failed...",Toast.LENGTH_LONG).show()
+            Toast.makeText(applicationContext, "Connection Failed...", Toast.LENGTH_LONG).show()
         }
+        this@MainActivity.runOnUiThread {
+            enableSpinner(
+                false,
+                "Loading stock check list complete...."
+            )
+        }
+        //dlg.dismiss()
+        refreshDataPart2()*/
     }
 
-    fun refreshDataSuccess(){
+
+    fun refreshDataPart2(){
+
 
         itemsAdapter = CheckItemsAdapter(this, lstItems as ArrayList<CheckItems>) { position,recordCount ->
             // item is clicked
-
             // Create a new zeroed stock check if none exists
-
             if (recordCount == 0){
                 //enableSpinner(true,"Creating new blank stock check ... ")
                 recyclerCheckItems.layoutManager = null
                 println("I'm making a new one $position")
-
-                val dlg = showDialog("Creating blank stock check....")
+                //val dlg = showDialog("Creating blank stock check....")
                 val t = launch (Dispatchers.IO) {
-                    //this@MainActivity.runOnUiThread{enableSpinner(true,"Creating new blank stock check....")}
+                    this@MainActivity.runOnUiThread{enableSpinner(true,"Creating new blank stock check....")}
                     createBlankStockCheck2(position, selectedDate)
                 }.invokeOnCompletion {
                     println("Out.....................")
-                    dlg.dismiss()
+                    //dlg.dismiss()
                     this@MainActivity.runOnUiThread(java.lang.Runnable {this.createBlankStockCheckComplete(position)})
                 }
 
@@ -116,6 +137,7 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
         val layoutManager = LinearLayoutManager(this)
         recyclerCheckItems.layoutManager = layoutManager
 
+        dlg?.dismiss()
     }
 
     fun createBlankStockCheckComplete(position: Int){
@@ -161,17 +183,21 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
                 val db = DBHelper()
                 val conn = db.dbConnect()
                 db.updateStockCheck(conn!!, returnArray)
+                conn!!.close()
             }
         }
     }
 
 
     fun testButton() {
+        //showDialog("Loading stock check list...")
 
-        showDialog("Loading stock check list...")
-
-
+        this@MainActivity.runOnUiThread {dlg = showDialog("Arse Buckets")}
+        this@MainActivity.runOnUiThread { enableSpinner(true, "Loading stock check list....") }
     }
+
+
+
 
     private fun showDialog(title: String) : Dialog {
         val dialog = Dialog(this)
@@ -240,24 +266,24 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
     }
 
 
-    fun getChecks2(selectedDate:Date) : ArrayList<CheckItems> {
+    fun getStockChecksList(selectedDate:Date) : Pair<ArrayList<CheckItems>,Boolean> {
 
-         val db = DBHelper()
-         var conn: Connection? = null
-
-         jobSuccess=false
-             try {
-                 conn = db.dbConnect()
-                 lstItems = db.getListOfStockChecks(conn,selectedDate)
-                 conn!!.close()
-                 jobSuccess = true
-             } catch (e:Exception){
-                 println(e.message)
-             }
-        return lstItems
+        val db = DBHelper()
+        var conn: Connection? = null
+        var jobSuccess=false
+        try {
+            conn = db.dbConnect()
+            lstItems = db.getListOfStockChecks(conn,selectedDate)
+            conn!!.close()
+            jobSuccess = true
+        } catch (e:Exception){
+            println(e.message)
+        }
+        conn!!.close()
+        return Pair(lstItems, jobSuccess)
     }
 
-    fun createBlankStockCheck2(position: Int, selectedDate: Date) : Boolean{
+    fun createBlankStockCheck2(checkType: Int, selectedDate: Date) : Boolean{
 
 
         val db = DBHelper()
@@ -267,7 +293,7 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
 
         try {
             conn = db.dbConnect()
-            db.createBlankStockCheck(conn, position, selectedDate)
+            db.createBlankStockCheck(conn, checkType, selectedDate)
             jobSuccess = true
         } catch (e:Exception){
             println(e.message)
@@ -313,6 +339,8 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
         dialog.show()
         return dialog
     }
+
+
 
 
 }

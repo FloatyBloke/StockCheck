@@ -138,12 +138,6 @@ class DBHelper {
                 "WHERE checkitems.type=$checkType"
 
 
-        //var rs = statement.executeQuery("select * from product")
-        //println(checkSQL)
-
-
-
-
         var rs = statement.executeQuery(checkSQL)
 
         var displayOrder : Int = 0

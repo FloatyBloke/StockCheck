@@ -3,13 +3,14 @@ package com.flangenet.stockcheck.Model
 import android.os.Parcel
 import android.os.Parcelable
 
-class StockCheck (var checkID: Int, var productId: Int, var displayOrder: Int, var description: String, var stock: Float, var selected: Boolean) :
+class StockCheck (var checkID: Int, var productId: Int, var displayOrder: Int, var description: String, var stock: Float, var oldStock:Float,var selected: Boolean) :
     Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readInt(),
         parcel.readInt(),
         parcel.readInt(),
         parcel.readString()!!,
+        parcel.readFloat(),
         parcel.readFloat(),
         parcel.readByte() != 0.toByte()
     ) {
@@ -21,6 +22,7 @@ class StockCheck (var checkID: Int, var productId: Int, var displayOrder: Int, v
         parcel.writeInt(displayOrder)
         parcel.writeString(description)
         parcel.writeFloat(stock)
+        parcel.writeFloat(oldStock)
         parcel.writeByte(if (selected) 1 else 0)
     }
 

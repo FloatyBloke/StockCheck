@@ -47,7 +47,7 @@ class StockItemsAdapter (val context: Context, val items:ArrayList<StockCheck>, 
             holder.itemView.setBackgroundColor(context.getColor(android.R.color.holo_green_light))
 
         } else {
-            holder.itemView.setBackgroundColor(context.getColor(android.R.color.white))
+            holder.itemView.setBackgroundColor(context.getColor(android.R.color.transparent))
             //holder.itemView.Description.fontFeatureSettings
         }
         holder.bindItems(items[position], position)

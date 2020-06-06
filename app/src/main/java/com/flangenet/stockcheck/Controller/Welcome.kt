@@ -4,16 +4,12 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
-import android.os.SystemClock
-import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
-import android.speech.SpeechRecognizer
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.flangenet.stockcheck.R
 import kotlinx.android.synthetic.main.activity_welcome.*
-import java.sql.Connection
 import java.util.*
 import kotlinx.coroutines.*
 
@@ -22,7 +18,7 @@ import kotlinx.coroutines.*
 class Welcome : AppCompatActivity() {
 
 
-    val db = DBHelper()
+    val db = DBHelper(applicationContext)
     private  var logInfo: String = "Starting"
     var logText: StringBuilder  = java.lang.StringBuilder()
 

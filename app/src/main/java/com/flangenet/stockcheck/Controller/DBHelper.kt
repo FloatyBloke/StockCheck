@@ -1,8 +1,9 @@
 package com.flangenet.stockcheck.Controller
 
+import android.content.Context
 import android.os.StrictMode
 import android.util.Log
-import android.widget.Toast
+import androidx.preference.PreferenceManager
 import com.flangenet.stockcheck.Model.CheckItems
 import com.flangenet.stockcheck.Model.StockCheck
 import com.flangenet.stockcheck.Model.ChecksDB
@@ -11,26 +12,39 @@ import java.sql.*
 import java.util.Date
 import kotlin.collections.ArrayList
 
-class DBHelper {
-    private val ip = App.prefs.connectIP
+class DBHelper(context: Context) {
+/*    private val ip = App.prefs.connectIP
     private val db = App.prefs.connectDB
     private val username = App.prefs.connectUser
-    private val password = App.prefs.connectPassword
+    private val password = App.prefs.connectPassword*/
+
+    private var ip = PreferenceManager.getDefaultSharedPreferences(context).getString("ip", null)
+    private var db = PreferenceManager.getDefaultSharedPreferences(context).getString("db", null)
+    private var username = PreferenceManager.getDefaultSharedPreferences(context).getString("user", null)
+    private var password = PreferenceManager.getDefaultSharedPreferences(context).getString("password", null)
 
 
     fun dbConnect () : Connection? {
-        //val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
-        //StrictMode.setThreadPolicy(policy)
+
+/*        ip = "bgz3cg3qm8wkdi24bdle-mysql.services.clever-cloud.com"
+        db = "bgz3cg3qm8wkdi24bdle"
+        username = "ug3ryuiyhm4kue7r"
+        password = "5gI3lKlnDLLgYQsPzIzl"*/
+
         var conn : Connection? = null
-        var connString : String? = null
         try {
             Log.e("ASK", "Connection Setup")
-            val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
+            val policy = StrictMode.ThreadPolicy.Builder().permitAll().
+            penaltyDialog().penaltyLog().build()
             StrictMode.setThreadPolicy(policy)
-            val connURL = "jdbc:mysql://$ip:3306/$db"
+            //val connURL = "jdbc:mysql://$ip:3306/$db?characterEncoding=utf8"
+            //val connURL = "jdbc:mysql://bgz3cg3qm8wkdi24bdle-mysql.services.clever-cloud.com:3306/bgz3cg3qm8wkdi24bdle"
+            val connURL = "jdbc:mysql://$ip:3306/$db?characterEncoding=utf8"
             Class.forName("com.mysql.jdbc.Driver").newInstance()
-            conn = DriverManager.getConnection(connURL,username,password)
             Log.e("ASK", "Connection Called")
+            DriverManager.setLoginTimeout(5)
+            conn = DriverManager.getConnection(connURL,username,password)
+            //conn = DriverManager.getConnection(connURL,"ug3ryuiyhm4kue7r","5gI3lKlnDLLgYQsPzIzl")
 
         } catch (ex : SQLException) {
             Log.e("SQL Error : ", ex.message)
@@ -39,14 +53,13 @@ class DBHelper {
         }  catch (ex2 : Exception) {
             Log.e("Error : ", ex2.message)
         }
+        Log.d("Connection","$conn")
         return conn
 
 
     }
 
     suspend fun dbConnectCheck () : String {
-        val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
-        StrictMode.setThreadPolicy(policy)
 
         var logInfo: String = "Connection Setup"
         var conn : Connection? = null
@@ -93,7 +106,7 @@ class DBHelper {
             tList.date = selectedDate
             tList.typeID = rs.getInt(2)
             tList.itemID = rs.getInt(4)
-            tList.stock=0f
+            tList.stock = 0f
             listStockCheck.add(tList)
             println("${tList.date} : ${tList.typeID} : ${tList.itemID} : ${tList.stock}")
         }
@@ -142,7 +155,7 @@ class DBHelper {
 
         var displayOrder : Int = 0
         while(rs.next()) {
-            val tList = StockCheck(0,0,0,"t",0F,false)
+            val tList = StockCheck(0,0,0,"t",0F,0F,false)
 
             tList.displayOrder = rs.getInt(2)
             tList.productId = rs.getInt(3)
@@ -153,6 +166,7 @@ class DBHelper {
             }
 
             tList.stock = rs.getFloat(5)
+            tList.oldStock = tList.stock
             //tList.stock=0f
             tList.selected = false
             tList.checkID = rs.getInt(6)
@@ -164,7 +178,7 @@ class DBHelper {
 
     }
 
-    fun getListOfStockChecks(conn: Connection?, selectedDate:Date): ArrayList<CheckItems>{
+    fun getListOfStockChecks(conn: Connection?, selectedDate:Date): ArrayList<CheckItems>  {
         val listChecks = ArrayList<CheckItems>()
 
         val statement: Statement = conn!!.createStatement()
@@ -202,15 +216,7 @@ class DBHelper {
         var i = ps.executeUpdate()
     }
 
-    fun updateStockCheck(conn: Connection, lstItems: ArrayList<StockCheck>){
 
-        var ps: PreparedStatement
-
-        lstItems.forEach{
-            ps = conn.prepareStatement("UPDATE checks SET stock=${it.stock} WHERE id=${it.checkID}")
-            var i = ps.executeUpdate()
-        }
-    }
 
 
 }

@@ -19,7 +19,7 @@ class SharedPrefs(context: Context) {
 
     var connectDB: String?
         get() = prefs.getString(CONNECT_DB,"stockchecks")
-        set(value) = prefs.edit().putString(CONNECT_IP,value).apply()
+        set(value) = prefs.edit().putString(CONNECT_DB,value).apply()
 
     var connectUser: String?
         get() = prefs.getString(CONNECT_USER,"god3")

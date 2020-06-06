@@ -38,6 +38,7 @@
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:layout_marginTop="8dp"
+        android:background="@drawable/busy_animation"
         android:src="@mipmap/ufo01"
         app:layout_constraintTop_toBottomOf="@+id/textView"
         tools:layout_editor_absoluteX="55dp" />

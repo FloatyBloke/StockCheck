@@ -9,7 +9,6 @@
         android:id="@+id/Description"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
         android:textSize="24sp"
         app:layout_constraintEnd_toStartOf="@+id/txtStock"
         app:layout_constraintStart_toStartOf="parent"
@@ -22,8 +21,16 @@
         android:layout_height="wrap_content"
         android:textAlignment="textEnd"
         android:textSize="24sp"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/txtPrep"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="Stock Figure" />
+
+    <TextView
+        android:id="@+id/txtPrep"
+        android:layout_width="25dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -7,10 +7,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.flangenet.stockcheck.Model.StockCheck
-import com.flangenet.stockcheck.Model.StockItem
 import com.flangenet.stockcheck.R
-import kotlinx.android.synthetic.main.check_line.view.*
-import kotlinx.android.synthetic.main.stock_line.view.*
 
 class StockItemsAdapter (val context: Context, val items:ArrayList<StockCheck>, val itemClick:(Int) -> Unit):RecyclerView.Adapter<StockItemsAdapter.ViewHolder>(){
 
@@ -18,11 +15,18 @@ class StockItemsAdapter (val context: Context, val items:ArrayList<StockCheck>, 
         private val description: TextView = itemView.findViewById<TextView>(R.id.Description)
         //private val iD: TextView = itemView.findViewById<TextView>(R.id.txtId)
         private val stock: TextView = itemView.findViewById<TextView>(R.id.txtStock)
+        private val imgPrep: TextView = itemView.findViewById<TextView>(R.id.txtPrep)
 
         fun bindItems(item:StockCheck, position: Int){
             description.text = item.description
             //iD.text = position.toString()
             stock.text = String.format("%.2f", item.stock)
+            if (!item.prep){
+                imgPrep.text = " "
+            } else {
+                imgPrep.text = "+pr"
+            }
+
             itemView.setOnClickListener{
                 //it.setBackgroundColor(context.getColor(android.R.color.holo_green_light))
                 //it.txtDescription.fontVariationSettings.f

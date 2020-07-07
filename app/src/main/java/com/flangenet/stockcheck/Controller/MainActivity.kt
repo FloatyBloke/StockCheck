@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
+import android.os.StrictMode
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -23,6 +24,8 @@ import com.flangenet.stockcheck.Utilities.*
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.progress_bit.*
 import kotlinx.coroutines.*
+import java.io.IOException
+import java.net.InetAddress
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.util.*
@@ -48,6 +51,8 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
         setSupportActionBar(findViewById(R.id.miToolbar))
 
         //bob.addObserver(GetChecksListObserver())
+        val policy: StrictMode.ThreadPolicy = StrictMode.ThreadPolicy.Builder().permitAll().build()
+        StrictMode.setThreadPolicy(policy)
 
 
     }
@@ -56,6 +61,7 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
         inflater.inflate(R.menu.settings_menu, menu)
         return true
     }
+
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         R.id.action_settings -> {
             val intent = Intent(this, SettingsActivity::class.java)
@@ -66,8 +72,8 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
         R.id.action_favorite -> {
             // User chose the "Favorite" action, mark the current item
             // as a favorite...
-            Toast.makeText(this,
-                PreferenceManager.getDefaultSharedPreferences(this).getString("password", null),Toast.LENGTH_LONG).show()
+            val t = ping("bgz3cg3qm8wkdi24bdle-mysql.services.clever-cloud.com")
+            Toast.makeText(this,"${PreferenceManager.getDefaultSharedPreferences(this).getString("password", null)} - $t",Toast.LENGTH_LONG).show()
             true
         }
 
@@ -108,6 +114,7 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
         txtToday.text = prettyDateFormat.format(selectedDate)
         recyclerCheckItems.layoutManager = null
 
+
         launch(Dispatchers.Main) {enableSpinner(true,"Loading stock check list ....")}
         //bob.getStockChecksListObservable(selectedDate)
 
@@ -116,6 +123,7 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
         lstItems = tempItems
         if (jobSuccess2) {
             lstItems = tempItems
+            recyclerCheckItems.visibility = View.VISIBLE
         } else {
             Toast.makeText(applicationContext, "Connection Failed...", Toast.LENGTH_LONG).show()
         }
@@ -170,7 +178,6 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
     }
 
     private fun openStockCheck(position : Int){
-        var lstCheck = ArrayList<StockCheck>()
 
         val checkListIntent = Intent(this,CheckList::class.java)
         checkListIntent.putExtra(EXTRA_CHECKLIST_TYPE,position)
@@ -178,7 +185,7 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
         //println(lstItems[position-1].description)
         checkListIntent.putExtra(EXTRA_CHECKLIST_DATE,sqlDateFormat.format(selectedDate))
 
-        lstCheck = getStockCheck(position, selectedDate)
+        var lstCheck: ArrayList<StockCheck> = getStockCheck(position, selectedDate)
         checkListIntent.putParcelableArrayListExtra(EXTRA_CHECK_ARRAY, lstCheck)
         //startActivity(checkListIntent)
         startActivityForResult(checkListIntent,PASS_ME_A_STOCK_CHECK)
@@ -251,11 +258,13 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
         txtInfo.text = info
         Log.d("Spinner","$enable - $info")
         if (enable) {
+            recyclerCheckItems.visibility = View.INVISIBLE
             llProgressBar.visibility = View.VISIBLE
             //progressBar.visibility = View.VISIBLE
             //txtInfo.visibility = View.VISIBLE
         } else {
-            llProgressBar.visibility = View.GONE
+            recyclerCheckItems.visibility = View.VISIBLE
+            llProgressBar.visibility = View.INVISIBLE
             //progressBar.visibility = View.INVISIBLE
             //txtInfo.visibility = View.INVISIBLE
         }
@@ -276,7 +285,7 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
             if (conn != null) {
                 lstCheck= db.getStockCheck(conn,checkListType,sqlDateFormat.format(selectedDate))
                 jobSuccess = true
-                conn!!.close()
+                conn.close()
             }
         } catch (e:Exception){
             println(e.message)
@@ -372,7 +381,7 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
 
         // Check if any update is needed
         lstItems.forEach {
-            if (it.stock != it.oldStock) {
+            if (it.stock != it.inStock) {
                 recCount = +1
             }
         }
@@ -382,7 +391,7 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
                 conn = db.dbConnect()
                 if (conn != null) {
                     lstItems.forEach {
-                        if (it.stock != it.oldStock) {
+                        if (it.stock != it.inStock) {
                             ps = conn!!.prepareStatement("UPDATE checks SET stock=${it.stock} WHERE id=${it.checkID}")
                             var i = ps.executeUpdate()
                             recCount = +1
@@ -401,5 +410,20 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
         } else {
             Toast.makeText(this,"Nothing to update",Toast.LENGTH_LONG).show()
         }
+    }
+
+
+    fun ping(host: String?): Long? = runBlocking (Dispatchers.IO){
+        val startTime = Date()
+        var outSecs: Long = 0
+        try {
+            val address: InetAddress = InetAddress.getByName(host)
+            if (address.isReachable(1000)) {
+                outSecs = (startTime.time - Date().time) / 1000
+            }
+        } catch (e: IOException) {
+            // Host not available, nothing to do here
+        }
+        return@runBlocking outSecs
     }
 }

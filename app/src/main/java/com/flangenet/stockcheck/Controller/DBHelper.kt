@@ -18,10 +18,10 @@ class DBHelper(context: Context) {
     private val username = App.prefs.connectUser
     private val password = App.prefs.connectPassword*/
 
-    private var ip = PreferenceManager.getDefaultSharedPreferences(context).getString("ip", null)
-    private var db = PreferenceManager.getDefaultSharedPreferences(context).getString("db", null)
-    private var username = PreferenceManager.getDefaultSharedPreferences(context).getString("user", null)
-    private var password = PreferenceManager.getDefaultSharedPreferences(context).getString("password", null)
+    private var ip = PreferenceManager.getDefaultSharedPreferences(context).getString("ip", "192.168.1.151")
+    private var db = PreferenceManager.getDefaultSharedPreferences(context).getString("db", "stockchecks")
+    private var username = PreferenceManager.getDefaultSharedPreferences(context).getString("user", "god3")
+    private var password = PreferenceManager.getDefaultSharedPreferences(context).getString("password", "password")
 
 
     fun dbConnect () : Connection? {
@@ -101,25 +101,27 @@ class DBHelper(context: Context) {
         var resultSQL: Boolean
         println(checkSQL)
         while(rs.next()) {
-            val tList = ChecksDB(0,Date(),checkType,0,0F)
+            val tList = ChecksDB(0,Date(),checkType,0,0F,false)
             //tList.id = null
             tList.date = selectedDate
             tList.typeID = rs.getInt(2)
             tList.itemID = rs.getInt(4)
             tList.stock = 0f
+            tList.prep = false
             listStockCheck.add(tList)
-            println("${tList.date} : ${tList.typeID} : ${tList.itemID} : ${tList.stock}")
+            println("${tList.date} : ${tList.typeID} : ${tList.itemID} : ${tList.stock} : ${tList.prep}")
         }
 
         // Take array and UPDATE checks with new zero stock check
 
         var insertSQL = StringBuilder()
-        insertSQL.append("INSERT INTO checks (date, typeid, itemid, stock) VALUES ")
+        insertSQL.append("INSERT INTO checks (date, typeid, itemid, stock, prep) VALUES ")
         listStockCheck.forEach {
-             insertSQL.append("('${sqlDateFormat.format(it.date)}', '${it.typeID}', '${it.itemID}', '${it.stock}'),")
+             insertSQL.append("('${sqlDateFormat.format(it.date)}', '${it.typeID}', '${it.itemID}', '${it.stock}', ${it.prep}),")
         }
         var t = insertSQL.toString()
         var t2 = t.substring(0,t.length-1) +";"
+        println(insertSQL)
         statement.execute(t2)
 
     }
@@ -143,10 +145,10 @@ class DBHelper(context: Context) {
                 "ON checkitems.id = selchecks.itemid " +
                 "WHERE checkitems.type=$checkType"
 
-        checkSQL = "SELECT checkitems.type, checkitems.displayorder, checkitems.itemid, selchecks.name,selchecks.stock, checksid " +
+        checkSQL = "SELECT checkitems.type, checkitems.displayorder, checkitems.itemid, selchecks.name,selchecks.stock, checksid, checksprep " +
                 "FROM checkitems " +
                 "LEFT JOIN" +
-                "(SELECT date, typeid, itemid,product.name AS name, stock, checks.id AS checksid FROM checks INNER JOIN product ON checks.itemid=product.id WHERE typeid=$checkType AND date='$selectedDateText') selchecks " +
+                "(SELECT date, typeid, itemid,product.name AS name, stock, checks.id AS checksid, checks.prep as checksprep FROM checks INNER JOIN product ON checks.itemid=product.id WHERE typeid=$checkType AND date='$selectedDateText') selchecks " +
                 "ON checkitems.itemid = selchecks.itemid " +
                 "WHERE checkitems.type=$checkType"
 
@@ -155,7 +157,7 @@ class DBHelper(context: Context) {
 
         var displayOrder : Int = 0
         while(rs.next()) {
-            val tList = StockCheck(0,0,0,"t",0F,0F,false)
+            val tList = StockCheck(0,0,0,"t",0F,false,0F,false)
 
             tList.displayOrder = rs.getInt(2)
             tList.productId = rs.getInt(3)
@@ -166,10 +168,11 @@ class DBHelper(context: Context) {
             }
 
             tList.stock = rs.getFloat(5)
-            tList.oldStock = tList.stock
+            tList.prep = rs.getBoolean(6)
+            tList.inStock = tList.stock
             //tList.stock=0f
             tList.selected = false
-            tList.checkID = rs.getInt(6)
+            tList.checkID = rs.getInt(7)
             listStockCheck.add(tList)
             //println("${displayOrder} : ${rs.getInt(1)} : ${rs.getString(2)}")
             displayOrder += 1

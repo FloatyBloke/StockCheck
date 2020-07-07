@@ -168,11 +168,11 @@ class DBHelper(context: Context) {
             }
 
             tList.stock = rs.getFloat(5)
-            tList.prep = rs.getBoolean(6)
+            tList.prep = rs.getBoolean(7)
             tList.inStock = tList.stock
             //tList.stock=0f
             tList.selected = false
-            tList.checkID = rs.getInt(7)
+            tList.checkID = rs.getInt(6)
             listStockCheck.add(tList)
             //println("${displayOrder} : ${rs.getInt(1)} : ${rs.getString(2)}")
             displayOrder += 1

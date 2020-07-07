@@ -392,10 +392,10 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
                 if (conn != null) {
                     lstItems.forEach {
                         if (it.stock != it.inStock) {
-                            ps = conn!!.prepareStatement("UPDATE checks SET stock=${it.stock} WHERE id=${it.checkID}")
+                            ps = conn!!.prepareStatement("UPDATE checks SET stock=${it.stock}, prep=${it.prep} WHERE id=${it.checkID}")
                             var i = ps.executeUpdate()
                             recCount = +1
-                            //println("${it.stock}")
+                            println("stock=${it.stock}, prep=${it.prep} WHERE id=${it.checkID}")
                         }
 
                     }

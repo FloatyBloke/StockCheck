@@ -38,13 +38,13 @@ class DBHelper(context: Context) {
             penaltyDialog().penaltyLog().build()
             StrictMode.setThreadPolicy(policy)
             //val connURL = "jdbc:mysql://$ip:3306/$db?characterEncoding=utf8"
-            //val connURL = "jdbc:mysql://bgz3cg3qm8wkdi24bdle-mysql.services.clever-cloud.com:3306/bgz3cg3qm8wkdi24bdle"
-            val connURL = "jdbc:mysql://$ip:3306/$db?characterEncoding=utf8"
+            val connURL = "jdbc:mysql://bgz3cg3qm8wkdi24bdle-mysql.services.clever-cloud.com:3306/bgz3cg3qm8wkdi24bdle"
+            //val connURL = "jdbc:mysql://$ip:3306/$db?characterEncoding=utf8"
             Class.forName("com.mysql.jdbc.Driver").newInstance()
             Log.e("ASK", "Connection Called")
             DriverManager.setLoginTimeout(5)
-            conn = DriverManager.getConnection(connURL,username,password)
-            //conn = DriverManager.getConnection(connURL,"ug3ryuiyhm4kue7r","5gI3lKlnDLLgYQsPzIzl")
+            //conn = DriverManager.getConnection(connURL,username,password)
+            conn = DriverManager.getConnection(connURL,"ug3ryuiyhm4kue7r","5gI3lKlnDLLgYQsPzIzl")
 
         } catch (ex : SQLException) {
             Log.e("SQL Error : ", ex.message)
@@ -157,7 +157,7 @@ class DBHelper(context: Context) {
 
         var displayOrder : Int = 0
         while(rs.next()) {
-            val tList = StockCheck(0,0,0,"t",0F,false,0F,false)
+            val tList = StockCheck(0,0,0,"t",0F,false,false,false)
 
             tList.displayOrder = rs.getInt(2)
             tList.productId = rs.getInt(3)
@@ -169,7 +169,7 @@ class DBHelper(context: Context) {
 
             tList.stock = rs.getFloat(5)
             tList.prep = rs.getBoolean(7)
-            tList.inStock = tList.stock
+            tList.changed = false
             //tList.stock=0f
             tList.selected = false
             tList.checkID = rs.getInt(6)

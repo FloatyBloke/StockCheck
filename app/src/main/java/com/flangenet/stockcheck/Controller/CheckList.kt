@@ -80,6 +80,7 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener, CoroutineSco
 
         btnNext.setOnClickListener { nextButton() }
         btnPrevious.setOnClickListener { prevButton() }
+        togPr.setOnClickListener { prepToggle() }
         //btnUpdate.setOnClickListener{updateCheck()}
         fabSpeechOutput.setOnClickListener { speechStatusToggle() }
 
@@ -165,6 +166,9 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener, CoroutineSco
         edtEntry.requestFocus()
         edtEntry.selectAll()
 
+        togPr.isChecked = lstItems[selectedPos].prep
+
+
         recycleStockItems.smoothScrollToPosition(newItem2)
         recycleStockItems.adapter?.notifyDataSetChanged()
         println("About to say ${lstItems[newItem2].description}")
@@ -183,9 +187,16 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener, CoroutineSco
     private fun nextButton(){
         val newText = edtEntry.text.toString()
         val newStock: Float = 0f
+
+
+
         if (newText!= "") {
+
+            lstItems[selectedPos].changed = newText.toFloat() != lstItems[selectedPos].stock
+
             lstItems[selectedPos].stock = newText.toFloat()
         }
+
         refreshSelected(selectedPos+1)
         //askSpeechInput()
     }
@@ -271,6 +282,13 @@ class CheckList : AppCompatActivity(), TextToSpeech.OnInitListener, CoroutineSco
         val date = SimpleDateFormat("yyyy-MM-dd").parse(sqlTextDate)
        // val format = dateFormat
         return dateFormat.format(date)
+    }
+    private fun prepToggle() {
+        lstItems[selectedPos].prep = !lstItems[selectedPos].prep
+        lstItems[selectedPos].changed = true
+        //refreshSelected(selectedPos)
+        recycleStockItems.adapter?.notifyDataSetChanged()
+
     }
 
 }

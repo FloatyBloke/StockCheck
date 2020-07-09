@@ -381,7 +381,7 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
 
         // Check if any update is needed
         lstItems.forEach {
-            if (it.stock != it.inStock) {
+            if (it.changed) {
                 recCount = +1
             }
         }
@@ -391,7 +391,7 @@ class MainActivity : AppCompatActivity() ,CoroutineScope by MainScope()  {
                 conn = db.dbConnect()
                 if (conn != null) {
                     lstItems.forEach {
-                        if (it.stock != it.inStock) {
+                        if (it.changed) {
                             ps = conn!!.prepareStatement("UPDATE checks SET stock=${it.stock}, prep=${it.prep} WHERE id=${it.checkID}")
                             var i = ps.executeUpdate()
                             recCount = +1
